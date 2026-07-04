@@ -177,14 +177,31 @@ export async function POST(req: Request) {
   }
 
   try {
+    // Backend Narrative Constraints: Sanitize state before giving it to the LLM to prevent hallucinations
+    const sanitizedState = JSON.parse(JSON.stringify(state)) as GameState;
+    
+    // 1. Remove defeated antagonists from active cases so the LLM cannot hallucinate them back
+    if (sanitizedState.activeCase?.suspects) {
+      sanitizedState.activeCase.suspects = sanitizedState.activeCase.suspects.filter(suspect => {
+        if (suspect.name.includes('Falcone') && ['arrested', 'captured', 'dead'].includes(sanitizedState.falconeStatus || '')) return false;
+        if ((suspect.name.includes('Penguin') || suspect.name.includes('Cobblepot')) && ['arrested', 'captured', 'dead'].includes(sanitizedState.penguinStatus || '')) return false;
+        return true;
+      });
+    }
+
+    // 2. Enforce Finale phase if Harvey falls, ensuring the TS backend catches it even if the LLM forgets
+    if (sanitizedState.harveyStability <= 0 && sanitizedState.gamePhase !== 'finale') {
+      sanitizedState.gamePhase = 'finale';
+    }
+
     // Append the narrative summary to the system prompt if it exists
-    let finalSystemPrompt = buildSystemPrompt(state)
+    let finalSystemPrompt = buildSystemPrompt(sanitizedState)
     if (narrativeSummary) {
       finalSystemPrompt += `\n\nNARRATIVE SUMMARY SO FAR:\n${narrativeSummary}`
     }
 
-    const currentTurn = state.turn;
-    const hauntingConsequences = state.consequences?.filter(c => c.status === 'pending' && (currentTurn - c.turnMade >= 3)) || [];
+    const currentTurn = sanitizedState.turn;
+    const hauntingConsequences = sanitizedState.consequences?.filter(c => c.status === 'pending' && (currentTurn - c.turnMade >= 3)) || [];
     if (hauntingConsequences.length > 0) {
       finalSystemPrompt += `\n\nCRITICAL DIRECTIVE: You MUST force the following consequences to surface and haunt the player in this exact turn. Their status MUST change to 'haunting' or 'resolved' in your response:\n`
       hauntingConsequences.forEach(c => {
@@ -344,7 +361,7 @@ export async function POST(req: Request) {
       messages: [
         { role: 'system', content: finalSystemPrompt },
         ...messageHistory.slice(-14),
-        { role: 'user', content: buildUserMessage(state, playerChoice) }
+        { role: 'user', content: buildUserMessage(sanitizedState, playerChoice) }
       ],
       max_tokens: 4000
     })
