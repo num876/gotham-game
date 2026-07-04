@@ -96,7 +96,9 @@ export interface GameState {
   harleyStatus: HarleyStatus
   gordonArc: GordanArc
   falconeStatus: 'untouched' | 'warned' | 'exposed' | 'arrested' | 'dead'
+  penguinStatus: 'untouched' | 'warned' | 'exposed' | 'arrested' | 'dead'
   currentSceneTitle: string
+  identitySwitchAvailable?: boolean
   choices: Choice[]
   gameOver: boolean
   outcome?: 'harvey-saved' | 'gotham-saved' | 'gotham-survives' | 'wrong-ending' | 'batman-broken' | 'bruce-exposed' | 'city-falls'

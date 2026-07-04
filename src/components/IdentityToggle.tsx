@@ -9,31 +9,31 @@ interface IdentityToggleProps {
 
 export function IdentityToggle({ identity, onToggle, disabled }: IdentityToggleProps) {
   return (
-    <div className="flex items-center justify-center p-4">
-      <div className="relative flex w-64 p-1 bg-surface rounded-full border border-border">
+    <div className="flex items-center justify-center p-2">
+      <div className="relative flex w-72 bg-black border border-border shadow-inner p-1">
         <button
           onClick={onToggle}
           disabled={disabled || identity === 'bruce'}
-          className={\`flex-1 flex items-center justify-center space-x-2 py-2 rounded-full transition-all duration-300 \${
+          className={`flex-1 flex items-center justify-center space-x-2 py-2 transition-all duration-300 font-mono tracking-widest text-xs ${
             identity === 'bruce' 
-              ? 'bg-bruce/10 text-bruce shadow-sm' 
-              : 'text-secondary hover:text-primary'
-          }\`}
+              ? 'bg-[#c9a84c]/20 text-[#c9a84c] border border-[#c9a84c]/50 shadow-[0_0_10px_rgba(201,168,76,0.3)]' 
+              : 'text-secondary hover:text-primary border border-transparent'
+          }`}
         >
-          <User size={16} />
-          <span className="text-sm font-medium tracking-wider">BRUCE WAYNE</span>
+          <User size={14} />
+          <span>BRUCE WAYNE</span>
         </button>
         <button
           onClick={onToggle}
           disabled={disabled || identity === 'batman'}
-          className={\`flex-1 flex items-center justify-center space-x-2 py-2 rounded-full transition-all duration-300 \${
+          className={`flex-1 flex items-center justify-center space-x-2 py-2 transition-all duration-300 font-mono tracking-widest text-xs ${
             identity === 'batman' 
-              ? 'bg-batman/20 text-blue-300 shadow-sm' 
-              : 'text-secondary hover:text-primary'
-          }\`}
+              ? 'bg-red-900/40 text-red-500 border border-red-600 shadow-[0_0_10px_rgba(255,0,0,0.5)]' 
+              : 'text-secondary hover:text-primary border border-transparent'
+          }`}
         >
-          <Shield size={16} />
-          <span className="text-sm font-medium tracking-wider">BATMAN</span>
+          <Shield size={14} />
+          <span>BATMAN</span>
         </button>
       </div>
     </div>

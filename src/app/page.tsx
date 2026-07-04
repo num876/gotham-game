@@ -1,101 +1,51 @@
-import Image from "next/image";
+import Link from 'next/link'
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const newSessionId = Math.random().toString(36).substring(2, 9)
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  return (
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      {/* Rain background */}
+      <div 
+        className="absolute inset-0 pointer-events-none opacity-40 animate-rain"
+        style={{
+          backgroundImage: 'linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0) 100%)',
+          backgroundSize: '10px 100px'
+        }}
+      />
+      
+      {/* CRT Scanline overlay */}
+      <div className="absolute inset-0 crt-overlay z-50 opacity-20 mix-blend-overlay" />
+      <div className="absolute inset-0 bg-red-900/5 mix-blend-overlay animate-flicker pointer-events-none" />
+
+      <div className="max-w-2xl text-center space-y-16 z-10 flex flex-col items-center justify-center relative">
+        {/* Minimalist Bat Symbol SVG */}
+        <div className="w-64 h-32 md:w-96 md:h-48 relative animate-pulse flex items-center justify-center opacity-90 drop-shadow-[0_0_15px_rgba(255,0,0,0.3)] text-red-700">
+          <svg viewBox="0 0 100 50" className="w-full h-full fill-current">
+            <path d="M 50 45 Q 45 40 40 35 Q 30 25 10 20 Q 5 18 2 10 Q 15 15 25 10 Q 30 5 35 15 Q 38 18 42 12 Q 45 5 48 5 L 48 10 L 50 15 L 52 10 L 52 5 Q 55 5 58 12 Q 62 18 65 15 Q 70 5 75 10 Q 85 15 98 10 Q 95 18 90 20 Q 70 25 60 35 Q 55 40 50 45 Z" />
+          </svg>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        
+        <div className="space-y-4">
+          <h1 className="text-2xl md:text-3xl font-mono text-red-600 tracking-[0.5em] uppercase mb-2 font-bold drop-shadow-md">
+            Gotham
+          </h1>
+          <p className="font-mono text-red-800/70 tracking-widest uppercase text-xs mb-12">
+            A Narrative Simulation
+          </p>
+        </div>
+
+        <div className="pt-8 flex flex-col items-center">
+          <Link 
+            href={`/gotham/${newSessionId}`}
+            className="group relative inline-flex items-center justify-center px-12 py-4 font-mono text-sm tracking-[0.3em] text-red-500 uppercase border border-red-900/50 bg-black/50 hover:bg-red-900/20 hover:text-red-400 hover:border-red-500 transition-all duration-300 overflow-hidden"
+          >
+            <span className="relative z-10">Initialize Sequence</span>
+            <div className="absolute inset-0 h-full w-0 bg-red-900/20 group-hover:w-full transition-all duration-500 ease-out" />
+            <div className="absolute inset-0 border border-red-500/0 group-hover:border-red-500/50 animate-pulse transition-all duration-300" />
+          </Link>
+        </div>
+      </div>
     </div>
-  );
+  )
 }

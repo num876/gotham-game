@@ -8,12 +8,13 @@ export const EP1_INITIAL_STATE: Omit<GameState, 'sessionId'> = {
   location: 'Wayne Manor — Study',
   chapterTitle: 'Two Sides of the Same Coin',
   allies: [
-    { id: 'alfred', name: 'Alfred Pennyworth', role: 'Butler / Confidant', knowsIdentity: true, trustLevel: 100, status: 'trusted', lastInteraction: 'Now', notes: ['Left Thomas Wayne\\'s Falcone correspondence on the desk tonight. Has not explained why.'] },
-    { id: 'harvey', name: 'Harvey Dent', role: 'DA — Mayor-elect', knowsIdentity: false, trustLevel: 82, status: 'trusted', lastInteraction: 'One hour ago — phone call', notes: ['Wants Bruce\\'s public endorsement tonight. Hollis is dead. Harvey is frightened and hiding it.'] },
-    { id: 'gilda', name: 'Gilda Dent', role: 'Harvey\\'s wife', knowsIdentity: false, trustLevel: 25, status: 'neutral', lastInteraction: 'Dinner last week', notes: ['Watches Bruce carefully. Warm but not soft. Loves Harvey with open eyes.'] },
-    { id: 'gordon', name: 'James Gordon', role: 'GCPD Lieutenant', knowsIdentity: false, trustLevel: 30, status: 'neutral', lastInteraction: 'Crime scene — Hollis', notes: ['Told Batman to leave the scene. Batman didn\\'t. Gordon filed it and moved on. He is deciding what that means.'] },
+    { id: 'alfred', name: 'Alfred Pennyworth', role: 'Butler / Confidant', knowsIdentity: true, trustLevel: 100, status: 'trusted', lastInteraction: 'Now', notes: ["Left Thomas Wayne's Falcone correspondence on the desk tonight. Has not explained why."] },
+    { id: 'harvey', name: 'Harvey Dent', role: 'DA — Mayor-elect', knowsIdentity: false, trustLevel: 82, status: 'trusted', lastInteraction: 'One hour ago — phone call', notes: ["Wants Bruce's public endorsement tonight. Hollis is dead. Harvey is frightened and hiding it."] },
+    { id: 'gilda', name: 'Gilda Dent', role: "Harvey's wife", knowsIdentity: false, trustLevel: 25, status: 'neutral', lastInteraction: 'Dinner last week', notes: ['Watches Bruce carefully. Warm but not soft. Loves Harvey with open eyes.'] },
+    { id: 'gordon', name: 'James Gordon', role: 'GCPD Lieutenant', knowsIdentity: false, trustLevel: 30, status: 'neutral', lastInteraction: 'Crime scene — Hollis', notes: ["Told Batman to leave the scene. Batman didn't. Gordon filed it and moved on. He is deciding what that means."] },
     { id: 'selina', name: 'Selina Kyle', role: 'Unknown', knowsIdentity: false, trustLevel: 0, status: 'unknown', lastInteraction: 'Rooftop — Hollis scene', notes: ['Was there first. Knows something. Has not decided what to do with it.'] },
-    { id: 'harley', name: 'Dr. Harleen Quinzel', role: 'Arkham — Harvey\\'s therapist', knowsIdentity: false, trustLevel: 10, status: 'unknown', lastInteraction: 'Wayne Foundation gala', notes: ['Said one thing at the gala. Bruce has not stopped thinking about it. She knows he hasn\\'t.'] }
+    { id: 'harley', name: 'Dr. Harleen Quinzel', role: "Arkham — Harvey's therapist", knowsIdentity: false, trustLevel: 10, status: 'unknown', lastInteraction: 'Wayne Foundation gala', notes: ["Said one thing at the gala. Bruce has not stopped thinking about it. She knows he hasn't."] },
+    { id: 'lucius', name: 'Lucius Fox', role: 'Wayne Enterprises R&D', knowsIdentity: true, trustLevel: 95, status: 'trusted', lastInteraction: 'Yesterday — applied ballistics', notes: ['Never asks what the tech is for. Doesn\'t need to.'] }
   ],
   activeCase: {
     id: 'case-01',
@@ -41,6 +42,7 @@ export const EP1_INITIAL_STATE: Omit<GameState, 'sessionId'> = {
   harleyStatus: 'dr-quinzel',
   gordonArc: 'suspicious',
   falconeStatus: 'untouched',
+  penguinStatus: 'untouched',
   currentSceneTitle: 'A Phone Call at Midnight',
   choices: [
     {
