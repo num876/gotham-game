@@ -12,7 +12,7 @@ export function ConsequenceRibbon({ consequences }: ConsequenceRibbonProps) {
   const recent = [...consequences].sort((a, b) => b.turnMade - a.turnMade).slice(0, 3)
 
   return (
-    <div className="flex justify-center space-x-4 p-2 bg-surface/50 border-y border-border">
+    <div className="flex justify-start md:justify-center space-x-4 p-2 bg-surface/50 border-y border-border min-w-max">
       {recent.map((c) => (
         <div 
           key={c.id}
