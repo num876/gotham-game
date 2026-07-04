@@ -140,7 +140,7 @@ export function NarrativeDisplay({ prose, sceneTitle, speakerLines, isLoading, s
 
       {/* Storyboard Frame */}
       {(frameUrl || isGeneratingFrame) && (
-        <div className="max-w-4xl mx-auto mb-12 relative w-full aspect-[21/9] bg-surface overflow-hidden border border-border/50 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-center [clip-path:polygon(20px_0,100%_0,100%_calc(100%-20px),calc(100%-20px)_100%,0_100%,0_20px)] group">
+        <div className="max-w-4xl mx-auto mb-12 relative w-full aspect-video md:aspect-[21/9] bg-surface overflow-hidden border border-border/50 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-center [clip-path:polygon(20px_0,100%_0,100%_calc(100%-20px),calc(100%-20px)_100%,0_100%,0_20px)] group">
           {frameUrl ? (
             <>
               <Image src={frameUrl} alt={sceneTitle || 'Scene Image'} fill className="object-cover transition-transform duration-[20s] ease-linear group-hover:scale-110 grayscale-[0.2]" />
@@ -168,7 +168,7 @@ export function NarrativeDisplay({ prose, sceneTitle, speakerLines, isLoading, s
       )}
 
       {prose && (
-        <div className="prose prose-invert prose-p:font-serif prose-p:text-xl md:prose-p:text-2xl prose-p:leading-[1.8] prose-p:text-primary/80 max-w-2xl mx-auto tracking-wide relative">
+        <div className="prose prose-invert prose-p:font-serif prose-p:text-base md:prose-p:text-2xl prose-p:leading-[1.8] prose-p:text-primary/80 max-w-2xl mx-auto tracking-wide relative">
           {/* Subtle decorative quote/line next to prose */}
           <div className="absolute -left-12 top-2 bottom-2 w-px bg-gradient-to-b from-transparent via-border/50 to-transparent hidden md:block" />
           {prose.split('\n\n').map((p, i) => (

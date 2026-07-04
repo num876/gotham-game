@@ -273,7 +273,7 @@ export default function GameSession({ params }: { params: { sessionId: string } 
           >
             {mobileSidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
-          <div className="flex-1 overflow-x-auto hidden sm:block">
+          <div className="flex-1 overflow-x-auto custom-scrollbar">
             <ConsequenceRibbon consequences={state.consequences} />
           </div>
           <div className="shrink-0 border-x border-border/50 bg-background/50 ml-auto">
@@ -312,6 +312,14 @@ export default function GameSession({ params }: { params: { sessionId: string } 
             />
           </div>
         </div>
+
+        {/* Mobile Sidebar Backdrop */}
+        {mobileSidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden" 
+            onClick={() => setMobileSidebarOpen(false)} 
+          />
+        )}
 
         {/* Right Sidebar - Allies & Case */}
         <div className={`${mobileSidebarOpen ? 'translate-x-0' : 'translate-x-full'} md:translate-x-0 absolute right-0 top-0 bottom-0 md:relative w-[320px] shrink-0 flex flex-col border-l border-border bg-surface/95 md:bg-surface/50 z-50 shadow-[-5px_0_20px_rgba(0,0,0,0.5)] backdrop-blur-md overflow-hidden transition-transform duration-300`}>

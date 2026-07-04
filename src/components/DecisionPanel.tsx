@@ -11,13 +11,13 @@ export function DecisionPanel({ choices, onChoice, disabled }: DecisionPanelProp
   if (!choices || choices.length === 0) return null
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-8 bg-surface/80 backdrop-blur-xl border-t border-border shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 md:p-8 bg-surface/80 backdrop-blur-xl border-t border-border shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
       {choices.map((choice) => (
         <button
           key={choice.id}
           onClick={() => onChoice(choice.id)}
           disabled={disabled}
-          className={`group flex flex-col items-center text-center p-6 transition-all duration-500 relative overflow-hidden backdrop-blur-md
+          className={`group flex flex-col items-center text-center p-4 md:p-6 transition-all duration-500 relative overflow-hidden backdrop-blur-md
             ${choice.risk === 'the-line' 
               ? 'border border-alert/30 bg-alert/5 hover:border-alert hover:bg-alert/10 hover:shadow-[0_0_30px_rgba(255,0,0,0.2)] hover-glitch' 
               : 'border border-border/50 bg-background/40 hover:border-primary/50 hover:bg-primary/5'
@@ -49,7 +49,7 @@ export function DecisionPanel({ choices, onChoice, disabled }: DecisionPanelProp
             {choice.label}
           </span>
 
-          <p className="text-xs text-secondary leading-relaxed font-mono opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
+          <p className="text-xs text-secondary leading-relaxed font-mono opacity-70 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
             {choice.consequence}
           </p>
           
