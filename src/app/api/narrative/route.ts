@@ -128,14 +128,37 @@ function generateMockResponse(state: GameState, playerChoice: string) {
   })
 }
 
+const rateLimitMap = new Map<string, { count: number, resetTime: number }>()
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now()
+  const record = rateLimitMap.get(ip)
+  
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(ip, { count: 1, resetTime: now + 60000 }) // 1 minute window
+    return true
+  }
+  
+  if (record.count >= 10) return false // max 10 requests per minute
+  
+  record.count += 1
+  return true
+}
+
 export async function POST(req: Request) {
-  let state: GameState, playerChoice: string, messageHistory: { role: 'system' | 'user' | 'assistant'; content: string }[]
+  const ip = req.headers.get('x-forwarded-for') || '127.0.0.1'
+  if (!checkRateLimit(ip)) {
+    return NextResponse.json({ error: 'Rate limit exceeded. Please wait a moment.' }, { status: 429 })
+  }
+
+  let state: GameState, playerChoice: string, messageHistory: { role: 'system' | 'user' | 'assistant'; content: string }[], narrativeSummary: string
   
   try {
     const body = await req.json()
     state = body.state
     playerChoice = body.playerChoice
     messageHistory = body.messageHistory
+    narrativeSummary = body.narrativeSummary
   } catch {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   }
@@ -154,12 +177,155 @@ export async function POST(req: Request) {
   }
 
   try {
+    // Append the narrative summary to the system prompt if it exists
+    let finalSystemPrompt = buildSystemPrompt(state)
+    if (narrativeSummary) {
+      finalSystemPrompt += `\n\nNARRATIVE SUMMARY SO FAR:\n${narrativeSummary}`
+    }
+
     const stream = await openai.chat.completions.create({
       model: 'gpt-4o',
       stream: true,
-      response_format: { type: "json_object" },
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "narrative_response",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              narrative: { type: "string" },
+              speakerLines: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    character: { type: "string" },
+                    line: { type: "string" },
+                    emotion: { type: "string", description: "Optional emotion", nullable: true }
+                  },
+                  required: ["character", "line"],
+                  additionalProperties: false
+                }
+              },
+              newConsequence: {
+                type: "object",
+                properties: {
+                  id: { type: "string" },
+                  decisionMade: { type: "string" },
+                  impact: { type: "string" },
+                  status: { type: "string", enum: ["pending", "resolved", "haunting"] },
+                  turnMade: { type: "number" }
+                },
+                required: ["id", "decisionMade", "impact", "status", "turnMade"],
+                additionalProperties: false,
+                nullable: true
+              },
+              caseUpdate: {
+                type: "object",
+                properties: {
+                  suspectId: { type: "string" },
+                  newEvidence: { type: "string" },
+                  newSuspectNote: { type: "string" }
+                },
+                required: ["suspectId", "newEvidence", "newSuspectNote"],
+                additionalProperties: false,
+                nullable: true
+              },
+              statDeltas: {
+                type: "object",
+                properties: {
+                  harveyStability: { type: "number" },
+                  gordonRelationship: { type: "number" },
+                  selinaTrust: { type: "number" },
+                  gildaTrust: { type: "number" },
+                  cityHope: { type: "number" },
+                  brucePsycheCost: { type: "number" }
+                },
+                required: ["harveyStability", "gordonRelationship", "selinaTrust", "gildaTrust", "cityHope", "brucePsycheCost"],
+                additionalProperties: false
+              },
+              harveyArcUpdate: {
+                type: "object",
+                properties: { newStage: { type: "string" } },
+                required: ["newStage"],
+                additionalProperties: false,
+                nullable: true
+              },
+              harleyStatusUpdate: {
+                type: "object",
+                properties: { newStatus: { type: "string" } },
+                required: ["newStatus"],
+                additionalProperties: false,
+                nullable: true
+              },
+              gordonArcUpdate: {
+                type: "object",
+                properties: { newArc: { type: "string" } },
+                required: ["newArc"],
+                additionalProperties: false,
+                nullable: true
+              },
+              falconeStatusUpdate: {
+                type: "object",
+                properties: { newStatus: { type: "string" } },
+                required: ["newStatus"],
+                additionalProperties: false,
+                nullable: true
+              },
+              penguinStatusUpdate: {
+                type: "object",
+                properties: { newStatus: { type: "string" } },
+                required: ["newStatus"],
+                additionalProperties: false,
+                nullable: true
+              },
+              identitySwitchAvailable: { type: "boolean" },
+              choices: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    id: { type: "string" },
+                    label: { type: "string" },
+                    identity: { type: "string", enum: ["bruce", "batman"] },
+                    risk: { type: "string" },
+                    consequence: { type: "string" },
+                    hint: { type: "string", nullable: true }
+                  },
+                  required: ["id", "label", "identity", "risk", "consequence"],
+                  additionalProperties: false
+                }
+              },
+              sceneTitle: { type: "string" },
+              visualEffect: { type: "string", nullable: true },
+              sceneImagePrompt: { type: "string", nullable: true },
+              ambientAudioPrompt: { type: "string", nullable: true }
+            },
+            required: [
+              "narrative",
+              "speakerLines",
+              "statDeltas",
+              "identitySwitchAvailable",
+              "choices",
+              "sceneTitle",
+              "newConsequence",
+              "caseUpdate",
+              "harveyArcUpdate",
+              "harleyStatusUpdate",
+              "gordonArcUpdate",
+              "falconeStatusUpdate",
+              "penguinStatusUpdate",
+              "visualEffect",
+              "sceneImagePrompt",
+              "ambientAudioPrompt"
+            ],
+            additionalProperties: false
+          }
+        }
+      },
       messages: [
-        { role: 'system', content: buildSystemPrompt(state) },
+        { role: 'system', content: finalSystemPrompt },
         ...messageHistory.slice(-14),
         { role: 'user', content: buildUserMessage(state, playerChoice) }
       ],

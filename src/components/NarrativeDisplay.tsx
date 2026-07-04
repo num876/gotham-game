@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
+import Image from 'next/image'
 
 interface SpeakerLine {
   character: string
@@ -142,7 +143,7 @@ export function NarrativeDisplay({ prose, sceneTitle, speakerLines, isLoading, s
         <div className="max-w-4xl mx-auto mb-12 relative w-full aspect-[21/9] bg-surface overflow-hidden border border-border/50 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-center [clip-path:polygon(20px_0,100%_0,100%_calc(100%-20px),calc(100%-20px)_100%,0_100%,0_20px)] group">
           {frameUrl ? (
             <>
-              <img src={frameUrl} alt={sceneTitle} className="w-full h-full object-cover transition-transform duration-[20s] ease-linear group-hover:scale-110 grayscale-[0.2]" />
+              <Image src={frameUrl} alt={sceneTitle || 'Scene Image'} fill className="object-cover transition-transform duration-[20s] ease-linear group-hover:scale-110 grayscale-[0.2]" />
               <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/30 mix-blend-multiply" />
               <div className="absolute inset-0 crt-overlay opacity-30 mix-blend-overlay" />
             </>
@@ -189,7 +190,7 @@ export function NarrativeDisplay({ prose, sceneTitle, speakerLines, isLoading, s
                      {isPlaying && (
                        <div className="absolute inset-0 bg-alert animate-pulse mix-blend-overlay opacity-30" />
                      )}
-                    <img src={`/characters/${avatar}?v=${Date.now()}`} alt={s.character} className={`w-full h-full object-cover ${isPlaying ? 'contrast-125' : 'contrast-75'}`} />
+                    <Image src={`/characters/${avatar}?v=${Date.now()}`} alt={s.character} fill className={`object-cover ${isPlaying ? 'contrast-125' : 'contrast-75'}`} />
                   </div>
                 )}
                 <div className="flex flex-col relative flex-1">

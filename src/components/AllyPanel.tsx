@@ -25,8 +25,12 @@ export function AllyPanel({ allies, harveyStability }: AllyPanelProps) {
             return (
               <div key={ally.id} className="space-y-2 group">
                 <div className="flex items-center space-x-4 mb-2">
-                  <div className="w-10 h-10 rounded-sm overflow-hidden border border-border/50 shrink-0 [clip-path:polygon(5px_0,100%_0,100%_calc(100%-5px),calc(100%-5px)_100%,0_100%,0_5px)]">
-                    <img src="/characters/harvey.png" alt="Harvey Dent" className="w-full h-full object-cover grayscale opacity-80 group-hover:opacity-100 group-hover:grayscale-0 transition-all duration-500" />
+                  <div className="w-10 h-10 shrink-0 [clip-path:polygon(5px_0,100%_0,100%_calc(100%-5px),calc(100%-5px)_100%,0_100%,0_5px)]">
+                    <DynamicPortrait
+                      characterId={isTwoFace ? 'two_face' : 'harvey'}
+                      characterName={isTwoFace ? 'Two-Face' : 'Harvey Dent'}
+                      className="w-full h-full object-cover border border-border/50 grayscale opacity-80 group-hover:opacity-100 group-hover:grayscale-0 transition-all duration-500"
+                    />
                   </div>
                   <div className="flex-1">
                     <div className="flex justify-between items-baseline mb-1">

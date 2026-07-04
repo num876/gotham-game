@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from 'react'
+import Image from 'next/image'
 
 interface DynamicPortraitProps {
   characterId: string
@@ -45,10 +46,11 @@ export function DynamicPortrait({ characterId, characterName, className = "" }: 
 
   return (
     <div className={`relative ${className} bg-surface overflow-hidden`}>
-      <img 
+      <Image 
         src={src} 
         alt={characterName} 
-        className={`w-full h-full object-cover grayscale opacity-80 transition-all duration-700 ${isGenerating ? 'opacity-30 scale-105 blur-sm' : ''}`} 
+        fill
+        className={`object-cover grayscale opacity-80 transition-all duration-700 ${isGenerating ? 'opacity-30 scale-105 blur-sm' : ''}`} 
         onError={handleError}
       />
       {isGenerating && (

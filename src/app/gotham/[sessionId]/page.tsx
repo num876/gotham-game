@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { initializeGameState } from '@/lib/game-state'
-import { GameState } from '@/types/game'
 import { IdentityToggle } from '@/components/IdentityToggle'
 import { ConsequenceRibbon } from '@/components/ConsequenceRibbon'
 import { AllyPanel } from '@/components/AllyPanel'
@@ -11,9 +10,13 @@ import { NarrativeDisplay } from '@/components/NarrativeDisplay'
 import { DecisionPanel } from '@/components/DecisionPanel'
 import { EpisodeTitle } from '@/components/EpisodeTitle'
 import { BackgroundEffects } from '@/components/BackgroundEffects'
+import { useGameStore } from '@/lib/store'
+import { Menu, X } from 'lucide-react'
 
 export default function GameSession({ params }: { params: { sessionId: string } }) {
-  const [state, setState] = useState<GameState | null>(null)
+  const { state, setState, messages, setMessages, narrativeSummary } = useGameStore()
+  const [hasHydrated, setHasHydrated] = useState(false)
+  
   const [narrative, setNarrative] = useState("")
   const [sceneTitle, setSceneTitle] = useState("")
   const [speakerLines, setSpeakerLines] = useState<{ character: string, line: string, emotion?: string }[]>([])
@@ -21,20 +24,34 @@ export default function GameSession({ params }: { params: { sessionId: string } 
   const [ambientAudioUrl, setAmbientAudioUrl] = useState<string | null>(null)
   const [sceneImageUrl, setSceneImageUrl] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [messages, setMessages] = useState<{ role: 'user' | 'assistant', content: string }[]>([])
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
 
   useEffect(() => {
-    // Initialize game state on mount
-    const initialState = initializeGameState(params.sessionId)
-    setState(initialState)
-    
-    // In a real app we might fetch the initial scene from the API, 
-    // but here we can just set a dummy initial narrative or let the player make their first move.
-    setNarrative("The rain hasn't stopped for three days. You're in the study. Alfred left a file on the desk tonight. It's thirty years old. The phone is ringing. It's Harvey.")
-    setSpeakerLines([
-      { character: 'HARVEY DENT (PHONE)', line: "Bruce? Tell me you're still awake. We have a problem." }
-    ])
-  }, [params.sessionId])
+    useGameStore.persist.rehydrate()
+    setHasHydrated(true)
+  }, [])
+
+  useEffect(() => {
+    if (!hasHydrated) return
+
+    // If no state, or if we switched to a new session ID, reset and initialize
+    if (!state || state.sessionId !== params.sessionId) {
+      const initialState = initializeGameState(params.sessionId)
+      setState(initialState)
+      setMessages([])
+      
+      setNarrative("The rain hasn't stopped for three days. You're in the study. Alfred left a file on the desk tonight. It's thirty years old. The phone is ringing. It's Harvey.")
+      setSpeakerLines([
+        { character: 'HARVEY DENT (PHONE)', line: "Bruce? Tell me you're still awake. We have a problem." }
+      ])
+    } else if (messages.length > 0) {
+      // Re-hydrate the screen from the last message if available
+      const lastMsg = messages[messages.length - 1]
+      if (lastMsg && lastMsg.role === 'assistant') {
+        setNarrative(lastMsg.content)
+      }
+    }
+  }, [hasHydrated, params.sessionId])
 
   const handleIdentityToggle = () => {
     if (!state) return
@@ -47,6 +64,7 @@ export default function GameSession({ params }: { params: { sessionId: string } 
   const handleChoice = async (choiceId: string) => {
     if (!state || isLoading) return
     setIsLoading(true)
+    setMobileSidebarOpen(false) // auto close sidebar on mobile when making a choice
     
     const choice = state.choices.find(c => c.id === choiceId)
     if (!choice) return
@@ -64,7 +82,8 @@ export default function GameSession({ params }: { params: { sessionId: string } 
         body: JSON.stringify({
           state: stateToSend,
           playerChoice: choice.label,
-          messageHistory: messages
+          messageHistory: messages,
+          narrativeSummary
         })
       })
 
@@ -90,10 +109,7 @@ export default function GameSession({ params }: { params: { sessionId: string } 
           }
         }
         if (done) {
-          // ensure final flush if there was no value on the last tick
-          if (!value) {
-            streamedText += decoder.decode()
-          }
+          if (!value) streamedText += decoder.decode()
           break
         }
       }
@@ -145,17 +161,12 @@ export default function GameSession({ params }: { params: { sessionId: string } 
           }).catch(err => console.error("Failed to generate ambient audio:", err))
         }
 
-        // Natively apply deltas to the state without requiring the AI to echo the entire massive state object
         setState(prevState => {
           if (!prevState) return prevState;
           const nextState = { ...prevState, turn: prevState.turn + 1 };
           
-          if (data.choices && data.choices.length > 0) {
-            nextState.choices = data.choices;
-          }
-          if (data.newConsequence) {
-            nextState.consequences = [...nextState.consequences, data.newConsequence];
-          }
+          if (data.choices && data.choices.length > 0) nextState.choices = data.choices;
+          if (data.newConsequence) nextState.consequences = [...nextState.consequences, data.newConsequence];
           if (data.statDeltas) {
             nextState.harveyStability = Math.max(0, Math.min(100, nextState.harveyStability + (data.statDeltas.harveyStability || 0)));
             nextState.gordonRelationship = Math.max(0, Math.min(100, nextState.gordonRelationship + (data.statDeltas.gordonRelationship || 0)));
@@ -193,11 +204,31 @@ export default function GameSession({ params }: { params: { sessionId: string } 
         const historyNarrative = data.narrative || ""
         const historyDialogue = (data.speakerLines || []).map((l: { character: string, emotion?: string, line: string }) => `${l.character} (${l.emotion || 'neutral'}): ${l.line}`).join('\n')
         
-        setMessages(prev => [
-          ...prev,
-          { role: 'user', content: choice.label },
-          { role: 'assistant', content: `${historyNarrative}\n\n${historyDialogue}` }
-        ])
+        setMessages(prev => {
+          const newMessages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
+            ...prev,
+            { role: 'user', content: choice.label },
+            { role: 'assistant', content: `${historyNarrative}\n\n${historyDialogue}` }
+          ]
+          
+          // Trigger summarization if context is getting too long
+          if (newMessages.length > 10) {
+             fetch('/api/summarize', {
+               method: 'POST',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify({ messages: newMessages, currentSummary: useGameStore.getState().narrativeSummary })
+             })
+             .then(res => res.json())
+             .then(sumData => {
+                if (sumData.summary) {
+                  useGameStore.getState().setNarrativeSummary(sumData.summary)
+                  useGameStore.getState().setMessages(newMessages.slice(-2)) // keep only the last interaction
+                }
+             }).catch(console.error)
+          }
+
+          return newMessages
+        })
       } catch (e) {
         console.error('Failed to parse final JSON', e)
         console.error('Streamed text:', streamedText)
@@ -210,7 +241,7 @@ export default function GameSession({ params }: { params: { sessionId: string } 
     }
   }
 
-  if (!state) return <div className="min-h-screen bg-[#06080c] flex items-center justify-center text-primary font-mono tracking-widest animate-pulse">INITIALISING LINK...</div>
+  if (!hasHydrated || !state) return <div className="min-h-screen bg-[#06080c] flex items-center justify-center text-primary font-mono tracking-widest animate-pulse">INITIALISING LINK...</div>
 
   return (
     <div className={`flex flex-col h-screen overflow-hidden transition-colors duration-1000 ${state.activeIdentity === 'batman' ? 'theme-batman' : 'theme-bruce'} relative`}>
@@ -235,18 +266,23 @@ export default function GameSession({ params }: { params: { sessionId: string } 
 
       {/* Top Bar - Consequence Ribbon & Identity Toggle */}
       <div className="shrink-0 border-b border-border bg-surface/80 backdrop-blur-md relative z-40 shadow-md">
-        <div className="flex items-center justify-between px-4">
-          <div className="flex-1">
+        <div className="flex items-center justify-between px-2 md:px-4">
+          <button 
+            className="md:hidden p-2 text-primary hover:bg-white/5 rounded mr-2"
+            onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+          >
+            {mobileSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+          <div className="flex-1 overflow-x-auto hidden sm:block">
             <ConsequenceRibbon consequences={state.consequences} />
           </div>
-          <div className="shrink-0 border-x border-border/50 bg-background/50">
+          <div className="shrink-0 border-x border-border/50 bg-background/50 ml-auto">
             <IdentityToggle 
               identity={state.activeIdentity} 
               onToggle={handleIdentityToggle}
               disabled={!state.identitySwitchAvailable || isLoading}
             />
           </div>
-          <div className="flex-1" />
         </div>
       </div>
 
@@ -256,7 +292,7 @@ export default function GameSession({ params }: { params: { sessionId: string } 
         <div className="flex-1 flex flex-col relative overflow-hidden bg-background">
           <div className="absolute inset-0 pointer-events-none opacity-[0.03] mix-blend-overlay z-0" />
           
-          <div className="flex-1 overflow-y-auto p-8 relative z-10 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto p-4 md:p-8 relative z-10 custom-scrollbar">
             <EpisodeTitle episodeId={state.episode} chapterTitle={state.chapterTitle} />
             <NarrativeDisplay 
               prose={narrative} 
@@ -278,7 +314,7 @@ export default function GameSession({ params }: { params: { sessionId: string } 
         </div>
 
         {/* Right Sidebar - Allies & Case */}
-        <div className="w-[320px] shrink-0 flex flex-col border-l border-border bg-surface/50 relative z-20 shadow-[-5px_0_20px_rgba(0,0,0,0.5)] backdrop-blur-md overflow-hidden">
+        <div className={`${mobileSidebarOpen ? 'translate-x-0' : 'translate-x-full'} md:translate-x-0 absolute right-0 top-0 bottom-0 md:relative w-[320px] shrink-0 flex flex-col border-l border-border bg-surface/95 md:bg-surface/50 z-50 shadow-[-5px_0_20px_rgba(0,0,0,0.5)] backdrop-blur-md overflow-hidden transition-transform duration-300`}>
           <div className="h-1/2 overflow-hidden border-b border-border/50">
             <AllyPanel 
               allies={state.allies}
@@ -331,3 +367,4 @@ export default function GameSession({ params }: { params: { sessionId: string } 
     </div>
   )
 }
+
