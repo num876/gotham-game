@@ -128,11 +128,17 @@ export function NarrativeDisplay({ prose, sceneTitle, speakerLines, isLoading, s
     if (audioUrl && audioRef.current) {
       audioRef.current.src = audioUrl
       audioRef.current.play().catch(() => {
-        console.warn('Auto-play blocked')
-        setPlayingIndex(prev => prev + 1) // skip if blocked
+        console.warn('Auto-play blocked, falling back to visual timing')
+        // Estimate reading time if audio fails: ~60ms per character, min 2 seconds
+        const lineText = speakerLines[playingIndex]?.line || ""
+        const duration = Math.max(2000, lineText.length * 60)
+        
+        setTimeout(() => {
+          setPlayingIndex(prev => prev + 1)
+        }, duration)
       })
     }
-  }, [audioUrl])
+  }, [audioUrl, playingIndex, speakerLines])
 
   return (
     <div className="flex-1 p-8 overflow-y-auto space-y-12 relative custom-scrollbar">
