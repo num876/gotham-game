@@ -70,8 +70,11 @@ export interface Consequence {
   turnMade: number
 }
 
+export type GamePhase = 'investigation' | 'escalation' | 'finale'
+
 export interface GameState {
   sessionId: string
+  gamePhase: GamePhase
   episode: Episode
   activeIdentity: ActiveIdentity
   turn: number

@@ -1,6 +1,7 @@
 import { GameState } from '@/types/game'
 
 export const EP1_INITIAL_STATE: Omit<GameState, 'sessionId'> = {
+  gamePhase: 'investigation',
   episode: 'ep1-two-sides',
   activeIdentity: 'bruce',
   turn: 0,

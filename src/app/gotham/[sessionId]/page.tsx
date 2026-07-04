@@ -180,6 +180,7 @@ export default function GameSession({ params }: { params: { sessionId: string } 
           if (data.gordonArcUpdate?.newArc) nextState.gordonArc = data.gordonArcUpdate.newArc;
           if (data.falconeStatusUpdate?.newStatus) nextState.falconeStatus = data.falconeStatusUpdate.newStatus;
           if (data.penguinStatusUpdate?.newStatus) nextState.penguinStatus = data.penguinStatusUpdate.newStatus;
+          if (data.gamePhaseUpdate?.newPhase) nextState.gamePhase = data.gamePhaseUpdate.newPhase;
           if (data.sceneTitle) nextState.currentSceneTitle = data.sceneTitle;
           if (typeof data.identitySwitchAvailable === 'boolean') nextState.identitySwitchAvailable = data.identitySwitchAvailable;
           

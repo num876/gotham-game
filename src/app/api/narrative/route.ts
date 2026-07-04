@@ -183,6 +183,15 @@ export async function POST(req: Request) {
       finalSystemPrompt += `\n\nNARRATIVE SUMMARY SO FAR:\n${narrativeSummary}`
     }
 
+    const currentTurn = state.turn;
+    const hauntingConsequences = state.consequences?.filter(c => c.status === 'pending' && (currentTurn - c.turnMade >= 3)) || [];
+    if (hauntingConsequences.length > 0) {
+      finalSystemPrompt += `\n\nCRITICAL DIRECTIVE: You MUST force the following consequences to surface and haunt the player in this exact turn. Their status MUST change to 'haunting' or 'resolved' in your response:\n`
+      hauntingConsequences.forEach(c => {
+        finalSystemPrompt += `- Consequence from Turn ${c.turnMade}: "${c.impact}" (Decision: ${c.decisionMade})\n`
+      })
+    }
+
     const stream = await openai.chat.completions.create({
       model: 'gpt-4o',
       stream: true,
@@ -252,6 +261,13 @@ export async function POST(req: Request) {
                 additionalProperties: false,
                 nullable: true
               },
+              gamePhaseUpdate: {
+                type: "object",
+                properties: { newPhase: { type: "string", enum: ["investigation", "escalation", "finale"] } },
+                required: ["newPhase"],
+                additionalProperties: false,
+                nullable: true
+              },
               harleyStatusUpdate: {
                 type: "object",
                 properties: { newStatus: { type: "string" } },
@@ -312,6 +328,7 @@ export async function POST(req: Request) {
               "newConsequence",
               "caseUpdate",
               "harveyArcUpdate",
+              "gamePhaseUpdate",
               "harleyStatusUpdate",
               "gordonArcUpdate",
               "falconeStatusUpdate",
