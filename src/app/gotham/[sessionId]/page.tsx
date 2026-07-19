@@ -57,6 +57,7 @@ export default function GameSession({ params }: { params: { sessionId: string } 
         setNarrative(lastMsg.content)
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasHydrated, params.sessionId])
 
   const handleIdentityToggle = () => {
@@ -265,7 +266,7 @@ export default function GameSession({ params }: { params: { sessionId: string } 
                const allGcpd = Object.values(nextState.territories).every(t => t.control === 'gcpd');
                if (allGcpd) {
                   nextState.outcome = 'gotham-survives';
-               } else if (nextState.gcpdSquadsAvailable <= 0) {
+               } else if ((nextState.gcpdSquadsAvailable || 0) <= 0) {
                   nextState.outcome = 'city-falls';
                }
             }
@@ -291,15 +292,12 @@ export default function GameSession({ params }: { params: { sessionId: string } 
           if (data.scannableEvidence && Array.isArray(data.scannableEvidence)) {
             if (nextState.activeCase) {
               const currentEvidence = nextState.activeCase.scannableEvidence || [];
-              const newItems = data.scannableEvidence.map((ev: any) => ({ ...ev, isLinked: false }));
+              const newItems = data.scannableEvidence.map((ev: { id: string, description: string }) => ({ ...ev, isLinked: false }));
               nextState.activeCase = { ...nextState.activeCase, scannableEvidence: [...currentEvidence, ...newItems] };
             }
           }
           return nextState;
         });
-        
-        const historyNarrative = data.narrative || ""
-        const historyDialogue = (data.speakerLines || []).map((l: { character: string, emotion?: string, line: string }) => `${l.character} (${l.emotion || 'neutral'}): ${l.line}`).join('\n')
         
         setMessages(prev => {
           const newMessages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [

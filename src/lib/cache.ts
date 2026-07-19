@@ -7,7 +7,7 @@ if (!fs.existsSync(CACHE_DIR)) {
   fs.mkdirSync(CACHE_DIR, { recursive: true })
 }
 
-export function setCachedNarrative(sessionId: string, choiceId: string, data: any) {
+export function setCachedNarrative(sessionId: string, choiceId: string, data: unknown) {
   const filePath = path.join(CACHE_DIR, `${sessionId}-${choiceId}.json`)
   try {
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2))
@@ -16,7 +16,7 @@ export function setCachedNarrative(sessionId: string, choiceId: string, data: an
   }
 }
 
-export function getCachedNarrative(sessionId: string, choiceId: string): any | null {
+export function getCachedNarrative(sessionId: string, choiceId: string): unknown | null {
   const filePath = path.join(CACHE_DIR, `${sessionId}-${choiceId}.json`)
   if (fs.existsSync(filePath)) {
     try {

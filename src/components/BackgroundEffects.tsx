@@ -3,11 +3,10 @@
 
 interface BackgroundEffectsProps {
   visualEffect?: 'rain' | 'fog' | 'neon' | 'office' | 'cave' | 'none' | 'snow' | 'thunderstorm' | 'smoke' | 'siren' | 'fire' | 'spotlight'
-  ambientAudioUrl?: string | null
   sceneImageUrl?: string | null
 }
 
-export function BackgroundEffects({ visualEffect, ambientAudioUrl, sceneImageUrl }: BackgroundEffectsProps) {
+export function BackgroundEffects({ visualEffect, sceneImageUrl }: BackgroundEffectsProps) {
   // We use key to force unmount/remount on effect change to restart animations if needed
   
   return (

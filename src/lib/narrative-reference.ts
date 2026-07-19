@@ -358,9 +358,9 @@ If she wasn't already with him in the tunnels, Harley encounters Marsh directly 
 - 'jokerInfectionSpread' increments to 35-45 (or higher if the hallucinations were leaned into).
 
 **CRITICAL INSTRUCTION FOR LLM**: When the closing state of the current episode is reached and the narrative naturally transitions to the opening state of the next episode, you MUST return 'episodeUpdate' set to 'ep9-sable-point-burns'.
-\`
+`
 
-const EPISODE_9_REFERENCE = \`
+const EPISODE_9_REFERENCE = `
 # EPISODE 9 — SABLE POINT BURNS
 
 **Opening state:** Marsh's condition and violence have escalated sharply — 'jokerInfectionSpread' climbing toward critical levels, representing both his own physical deterioration and the spread of the corrupted bio-agent through Gotham's water table.
@@ -391,7 +391,7 @@ When the user makes their final choice, set 'outcomeUpdate' to one of the follow
 
 **4. WHAT SHE BECAME FOR HIM ('what-she-became-for-him')**
 **Trigger:** 'harleyChaosBond' > 70 AND she inserted herself into Scene 9.2 AND the outcome is played as her making a genuinely dark, independent choice.
-\`
+`
 
 export function getEpisodeReference(episode: Episode): string {
   const references: Record<Episode, string> = {

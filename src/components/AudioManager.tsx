@@ -1,14 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { GamePhase } from '@/types/game'
 import { useGameStore } from '@/lib/store'
 
 interface AudioManagerProps {
   ambientAudioUrl: string | null
-  gamePhase: GamePhase
   brucePsycheCost: number
 }
 
-export function AudioManager({ ambientAudioUrl, gamePhase, brucePsycheCost }: AudioManagerProps) {
+export function AudioManager({ ambientAudioUrl, brucePsycheCost }: AudioManagerProps) {
   const ambientRef = useRef<HTMLAudioElement | null>(null)
   const { isVoicePlaying } = useGameStore()
   
@@ -29,6 +27,7 @@ export function AudioManager({ ambientAudioUrl, gamePhase, brucePsycheCost }: Au
       const currentVol = isVoicePlaying ? baseVolume * 0.3 : baseVolume
       ambientRef.current.volume = currentVol
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isVoicePlaying, baseVolume])
 
   useEffect(() => {

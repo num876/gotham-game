@@ -20,7 +20,7 @@ export async function POST(req: Request) {
 
     // We do not wait for this to finish before returning success to the client.
     // Background generation for all 3 choices.
-    choices.forEach(async (choice: any) => {
+    choices.forEach(async (choice: { id: string, label: string, identity: string }) => {
       try {
         let finalSystemPrompt = buildSystemPrompt(sanitizedState)
         if (narrativeSummary) {
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
     })
 
     return NextResponse.json({ success: true, message: 'Pre-generation started in background' })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to trigger pre-generation' }, { status: 500 })
   }
 }

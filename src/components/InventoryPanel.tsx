@@ -1,5 +1,6 @@
 import { useGameStore } from '@/lib/store'
 import { Package } from 'lucide-react'
+import { GameState } from '../types/game'
 import { useState } from 'react'
 
 export function InventoryPanel() {
@@ -17,7 +18,7 @@ export function InventoryPanel() {
     } else {
       setSelectedItem(item)
       // We will inject this activeGadget into the next LLM prompt
-      setState(prev => prev ? { ...prev, activeGadget: item } as any : null)
+      setState(prev => prev ? { ...prev, activeGadget: item } as GameState : null)
     }
   }
 

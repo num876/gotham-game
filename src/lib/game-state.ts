@@ -21,6 +21,7 @@ export const EP1_INITIAL_STATE: Omit<GameState, 'sessionId'> = {
     id: 'case-01',
     title: 'The Falcone Connection',
     status: 'open',
+    scannableEvidence: [],
     suspects: [
       { id: 's1', name: 'Carmine Falcone', knownAlias: 'The Roman', suspectStatus: 'suspect', connectionTo: ['Hollis', 'Thomas Wayne'], evidence: [], notes: ['Fingerprints at scene — too clean. He wanted them found. Or someone wanted them found.'] }
     ],

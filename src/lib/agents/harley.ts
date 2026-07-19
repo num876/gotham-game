@@ -8,7 +8,7 @@ export async function generateHarleyDialogue(state: GameState, playerChoice: str
   if (!openai) return null;
   
   // Harley only matters significantly in episodes > 5 or if harleyChaosBond > 20
-  if (state.episode !== 'Episode 6' && state.episode !== 'Episode 7' && state.episode !== 'Episode 8' && state.episode !== 'Episode 9' && (state.harleyChaosBond || 0) < 20) {
+  if (state.episode !== 'ep6-sable-point' && state.episode !== 'ep7-what-the-water-remembers' && state.episode !== 'ep8-the-thing-in-the-walls' && state.episode !== 'ep9-sable-point-burns' && (state.harleyChaosBond || 0) < 20) {
     return null;
   }
 

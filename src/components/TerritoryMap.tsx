@@ -31,7 +31,7 @@ export function TerritoryMap({ state, onAllocateSquad, disabled }: TerritoryMapP
       className="w-full h-full bg-black/80 border border-gray-700 p-6 flex flex-col font-mono text-sm"
     >
       <div className="flex justify-between items-center mb-6 border-b border-gray-700 pb-2">
-        <h2 className="text-xl text-red-500 font-bold tracking-widest">GOTHAM CITY: NO MAN'S LAND</h2>
+        <h2 className="text-xl text-red-500 font-bold tracking-widest">GOTHAM CITY: NO MAN&apos;S LAND</h2>
         <div className="text-blue-400">
           GCPD SQUADS AVAILABLE: <span className="font-bold text-lg">{availableSquads}</span>
         </div>
