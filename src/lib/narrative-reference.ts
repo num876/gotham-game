@@ -301,9 +301,9 @@ Marsh's body isn't recovered from the wreckage. GCPD and Batman disagree on whet
 - Marsh's status: presumed dead, actual fate unconfirmed.
 
 **CRITICAL INSTRUCTION FOR LLM**: When the closing state of the current episode is reached and the narrative naturally transitions to the opening state of the next episode, you MUST return 'episodeUpdate' set to 'ep7-what-the-water-remembers'.
-\`
+`
 
-const EPISODE_7_REFERENCE = \`
+const EPISODE_7_REFERENCE = `
 # EPISODE 7 — WHAT THE WATER REMEMBERS
 
 **Opening state:** Weeks later. Reports of aggressive, unexplained animal behavior and a string of violent, motiveless attacks in the industrial district. The bio-agent is spreading into the water supply.
@@ -323,9 +323,9 @@ Harley Quinn has heard about the attacks and is fascinated. She approaches Batma
 - 'harleyChaosBond' established at baseline.
 
 **CRITICAL INSTRUCTION FOR LLM**: When the closing state of the current episode is reached and the narrative naturally transitions to the opening state of the next episode, you MUST return 'episodeUpdate' set to 'ep8-the-thing-in-the-walls'.
-\`
+`
 
-const EPISODE_8_REFERENCE = \`
+const EPISODE_8_REFERENCE = `
 # EPISODE 8 — THE THING IN THE WALLS
 
 **Opening state:** The attacks are escalating in frequency and violence. The Joker functions more like a stalking threat.

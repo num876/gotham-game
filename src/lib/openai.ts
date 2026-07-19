@@ -13,7 +13,6 @@ function computeAvailableEp5Scenes(state: GameState) {
 function computeAvailableEp9Scenes(state: GameState) {
   return {
     falconeDefeated: ['arrested', 'captured', 'dead', 'fled', 'exposed'].includes(state.falconeStatus || ''),
-    jokerBioAgentActive: state.jokerBioAgentActive,
     jokerInfectionSpread: state.jokerInfectionSpread,
     catwomanInvolved: state.selinaAlignment === 'ally',
     harleyWildcardActive: (state.harleyChaosBond ?? 0) > 70
