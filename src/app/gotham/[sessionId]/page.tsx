@@ -369,7 +369,7 @@ export default function GameSession({ params }: { params: { sessionId: string } 
 
       {/* Dynamic Environment Effects */}
       <BackgroundEffects visualEffect={visualEffect} sceneImageUrl={sceneImageUrl} />
-      <AudioManager ambientAudioUrl={ambientAudioUrl} gamePhase={state.gamePhase} brucePsycheCost={state.brucePsycheCost} />
+      <AudioManager ambientAudioUrl={ambientAudioUrl} brucePsycheCost={state.brucePsycheCost} />
 
       {/* Top Bar - Consequence Ribbon & Identity Toggle */}
       <div className="shrink-0 border-b border-border bg-surface/80 backdrop-blur-md relative z-40 shadow-md pt-[env(safe-area-inset-top)]">
