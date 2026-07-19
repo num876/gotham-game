@@ -10,8 +10,13 @@ import { NarrativeDisplay } from '@/components/NarrativeDisplay'
 import { DecisionPanel } from '@/components/DecisionPanel'
 import { EpisodeTitle } from '@/components/EpisodeTitle'
 import { BackgroundEffects } from '@/components/BackgroundEffects'
+import { AudioManager } from '@/components/AudioManager'
+import { InventoryPanel } from '@/components/InventoryPanel'
+import { EpilogueViewer } from '@/components/EpilogueViewer'
+import { TerritoryMap } from '@/components/TerritoryMap'
 import { useGameStore } from '@/lib/store'
-import { Menu, X } from 'lucide-react'
+import { Menu, X, Save } from 'lucide-react'
+import { SaveManager } from '@/components/ui/save-manager'
 
 export default function GameSession({ params }: { params: { sessionId: string } }) {
   const { state, setState, messages, setMessages, narrativeSummary } = useGameStore()
@@ -25,6 +30,7 @@ export default function GameSession({ params }: { params: { sessionId: string } 
   const [sceneImageUrl, setSceneImageUrl] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+  const [showSaveManager, setShowSaveManager] = useState(false)
 
   useEffect(() => {
     useGameStore.persist.rehydrate()
@@ -61,12 +67,16 @@ export default function GameSession({ params }: { params: { sessionId: string } 
     } : null)
   }
 
-  const handleChoice = async (choiceId: string) => {
+  const handleChoice = async (choiceId: string, customMessage?: string) => {
     if (!state || isLoading) return
     setIsLoading(true)
     setMobileSidebarOpen(false) // auto close sidebar on mobile when making a choice
     
-    const choice = state.choices.find(c => c.id === choiceId)
+    // Support custom choice routing (like Territory map deployment)
+    const choice = choiceId === 'tactical_deployment' 
+      ? { id: choiceId, label: customMessage || 'Tactical Deployment', identity: state.activeIdentity }
+      : state.choices.find(c => c.id === choiceId)
+      
     if (!choice) return
 
     const chosenIdentity = choice.identity as 'bruce' | 'batman'
@@ -83,7 +93,8 @@ export default function GameSession({ params }: { params: { sessionId: string } 
           state: stateToSend,
           playerChoice: choice.label,
           messageHistory: messages,
-          narrativeSummary
+          narrativeSummary,
+          choiceId: choice.id
         })
       })
 
@@ -156,16 +167,38 @@ export default function GameSession({ params }: { params: { sessionId: string } 
               sessionId: params.sessionId,
               turn: state.turn + 1
             })
-          }).then(res => res.json()).then(ambientData => {
-            if (ambientData.url) setAmbientAudioUrl(ambientData.url)
+          }).then(async res => {
+            if (res.ok) {
+              const blob = await res.blob()
+              setAmbientAudioUrl(URL.createObjectURL(blob))
+            } else {
+              console.error("Failed to fetch ambient audio")
+            }
           }).catch(err => console.error("Failed to generate ambient audio:", err))
         }
+
+        const historyNarrative = data.narrative || ""
+        const historyDialogue = (data.speakerLines || []).map((l: { character: string, emotion?: string, line: string }) => `${l.character} (${l.emotion || 'neutral'}): ${l.line}`).join('\n')
 
         setState(prevState => {
           if (!prevState) return prevState;
           const nextState = { ...prevState, turn: prevState.turn + 1 };
           
-          if (data.choices && data.choices.length > 0) nextState.choices = data.choices;
+          if (data.choices && data.choices.length > 0) {
+            nextState.choices = data.choices;
+            
+            // Trigger background pre-generation of these new choices
+            fetch('/api/pregenerate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                state: nextState,
+                choices: data.choices,
+                messageHistory: [...messages, { role: 'user', content: choice.label }, { role: 'assistant', content: `${historyNarrative}\n\n${historyDialogue}` }],
+                narrativeSummary
+              })
+            }).catch(console.error);
+          }
           if (data.newConsequence) nextState.consequences = [...nextState.consequences, data.newConsequence];
           if (data.statDeltas) {
             nextState.harveyStability = Math.max(0, Math.min(100, nextState.harveyStability + (data.statDeltas.harveyStability || 0)));
@@ -176,11 +209,67 @@ export default function GameSession({ params }: { params: { sessionId: string } 
             nextState.brucePsycheCost = Math.max(0, nextState.brucePsycheCost + (data.statDeltas.brucePsycheCost || 0));
           }
           if (data.harveyArcUpdate?.newStage) nextState.harveyArc = data.harveyArcUpdate.newStage;
+          if (data.twoFacePhaseUpdate?.newPhase) nextState.twoFacePhase = data.twoFacePhaseUpdate.newPhase;
+          if (data.gildaArcPhaseUpdate?.newPhase) nextState.gildaArcPhase = data.gildaArcPhaseUpdate.newPhase;
+          if (data.gildaKnowsUpdate?.knows !== undefined) nextState.gildaKnows = data.gildaKnowsUpdate.knows;
           if (data.harleyStatusUpdate?.newStatus) nextState.harleyStatus = data.harleyStatusUpdate.newStatus;
+          if (data.harleyAlignmentUpdate?.alignment) nextState.harleyAlignment = data.harleyAlignmentUpdate.alignment;
           if (data.gordonArcUpdate?.newArc) nextState.gordonArc = data.gordonArcUpdate.newArc;
           if (data.falconeStatusUpdate?.newStatus) nextState.falconeStatus = data.falconeStatusUpdate.newStatus;
+          if (data.falconePhaseUpdate?.newPhase) nextState.falconePhase = data.falconePhaseUpdate.newPhase;
+          if (data.falconeBranchUpdate?.newBranch) nextState.falconeBranch = data.falconeBranchUpdate.newBranch;
+          if (data.falconeLedgerUpdate?.newStatus) nextState.falconeLedgerStatus = data.falconeLedgerUpdate.newStatus;
+          if (data.falconeMoleFoundUpdate?.found) nextState.falconeMoleFound = data.falconeMoleFoundUpdate.found;
+          if (data.falconeMoleIdentityUpdate?.identity) nextState.falconeMoleIdentity = data.falconeMoleIdentityUpdate.identity;
+          if (data.catwomanChoiceUpdate?.choice) nextState.catwomanChoice = data.catwomanChoiceUpdate.choice;
+          if (data.selinaAlignmentUpdate?.alignment) nextState.selinaAlignment = data.selinaAlignmentUpdate.alignment;
           if (data.penguinStatusUpdate?.newStatus) nextState.penguinStatus = data.penguinStatusUpdate.newStatus;
+          if (data.penguinArcPhaseUpdate?.newPhase) nextState.penguinArcPhase = data.penguinArcPhaseUpdate.newPhase;
+          if (data.gcpdMoleArcPhaseUpdate?.newPhase) nextState.gcpdMoleArcPhase = data.gcpdMoleArcPhaseUpdate.newPhase;
+          if (data.episodeUpdate?.episode) nextState.episode = data.episodeUpdate.episode;
+          if (data.scene45AppealFlagUpdate?.flag !== undefined) nextState.scene45AppealFlag = data.scene45AppealFlagUpdate.flag;
+          if (data.outcomeUpdate?.outcome) {
+            if (data.outcomeUpdate.outcome === 'city-falls' && nextState.gamePhase !== 'no-mans-land') {
+              nextState.gamePhase = 'no-mans-land';
+            } else {
+              nextState.outcome = data.outcomeUpdate.outcome;
+            }
+          }
+          if (data.alfredStatusUpdate?.status) nextState.alfredStatus = data.alfredStatusUpdate.status;
+          if (data.jokerInfectionSpreadUpdate?.spread !== undefined) nextState.jokerInfectionSpread = data.jokerInfectionSpreadUpdate.spread;
+          if (data.harleyChaosBondUpdate?.bond !== undefined) nextState.harleyChaosBond = data.harleyChaosBondUpdate.bond;
+          
+          if (data.chapterUpdate?.chapter) {
+            if (nextState.chapter === 1 && data.chapterUpdate.chapter === 2) {
+               if (nextState.outcome === 'wrong-ending') {
+                 nextState.selinaTrust = 0;
+                 nextState.selinaAlignment = 'neutral';
+               }
+            }
+            nextState.chapter = data.chapterUpdate.chapter;
+          }
+          if (data.gothamChaosUpdate?.chaos !== undefined) nextState.gothamChaos = data.gothamChaosUpdate.chaos;
+          if (data.jokerPhaseUpdate?.phase) nextState.jokerPhase = data.jokerPhaseUpdate.phase;
+          if (data.robinTrustUpdate?.trust !== undefined) nextState.robinTrust = data.robinTrustUpdate.trust;
+          if (data.robinPhaseUpdate?.phase) nextState.robinPhase = data.robinPhaseUpdate.phase;
+          if (data.gordonJokerPhaseUpdate?.phase) nextState.gordonJokerPhase = data.gordonJokerPhaseUpdate.phase;
+          if (data.gildaJokerPhaseUpdate?.phase) nextState.gildaJokerPhase = data.gildaJokerPhaseUpdate.phase;
+          if (data.hallucinationPhaseUpdate?.phase) nextState.hallucinationPhase = data.hallucinationPhaseUpdate.phase;
           if (data.gamePhaseUpdate?.newPhase) nextState.gamePhase = data.gamePhaseUpdate.newPhase;
+          if (data.territoriesUpdate) {
+            nextState.territories = data.territoriesUpdate.territories;
+            nextState.gcpdSquadsAvailable = data.territoriesUpdate.gcpdSquadsAvailable;
+            
+            // Check win/loss condition for No Man's Land
+            if (nextState.territories) {
+               const allGcpd = Object.values(nextState.territories).every(t => t.control === 'gcpd');
+               if (allGcpd) {
+                  nextState.outcome = 'gotham-survives';
+               } else if (nextState.gcpdSquadsAvailable <= 0) {
+                  nextState.outcome = 'city-falls';
+               }
+            }
+          }
           if (data.sceneTitle) nextState.currentSceneTitle = data.sceneTitle;
           if (typeof data.identitySwitchAvailable === 'boolean') nextState.identitySwitchAvailable = data.identitySwitchAvailable;
           
@@ -197,6 +286,13 @@ export default function GameSession({ params }: { params: { sessionId: string } 
                  }
                  nextState.activeCase = { ...nextState.activeCase, suspects: newSuspects };
               }
+            }
+          }
+          if (data.scannableEvidence && Array.isArray(data.scannableEvidence)) {
+            if (nextState.activeCase) {
+              const currentEvidence = nextState.activeCase.scannableEvidence || [];
+              const newItems = data.scannableEvidence.map((ev: any) => ({ ...ev, isLinked: false }));
+              nextState.activeCase = { ...nextState.activeCase, scannableEvidence: [...currentEvidence, ...newItems] };
             }
           }
           return nextState;
@@ -244,8 +340,19 @@ export default function GameSession({ params }: { params: { sessionId: string } 
 
   if (!hasHydrated || !state) return <div className="min-h-screen bg-[#06080c] flex items-center justify-center text-primary font-mono tracking-widest animate-pulse">INITIALISING LINK...</div>
 
+  if (state && state.outcome) {
+    return (
+      <EpilogueViewer 
+        outcome={state.outcome} 
+        onRestart={() => {
+          window.location.href = '/'
+        }} 
+      />
+    )
+  }
+
   return (
-    <div className={`flex flex-col h-screen overflow-hidden transition-colors duration-1000 ${state.activeIdentity === 'batman' ? 'theme-batman' : 'theme-bruce'} relative`}>
+    <div className={`fixed inset-0 flex flex-col font-mono text-primary bg-[#020408] selection:bg-alert/30 selection:text-white transition-colors duration-1000 ${state?.activeIdentity === 'bruce' ? 'theme-bruce' : 'theme-batman'}`}>
       {/* Identity specific background effects */}
       {state.activeIdentity === 'batman' && (
         <>
@@ -263,16 +370,25 @@ export default function GameSession({ params }: { params: { sessionId: string } 
       )}
 
       {/* Dynamic Environment Effects */}
-      <BackgroundEffects visualEffect={visualEffect} ambientAudioUrl={ambientAudioUrl} sceneImageUrl={sceneImageUrl} />
+      <BackgroundEffects visualEffect={visualEffect} sceneImageUrl={sceneImageUrl} />
+      <AudioManager ambientAudioUrl={ambientAudioUrl} gamePhase={state.gamePhase} brucePsycheCost={state.brucePsycheCost} />
 
       {/* Top Bar - Consequence Ribbon & Identity Toggle */}
-      <div className="shrink-0 border-b border-border bg-surface/80 backdrop-blur-md relative z-40 shadow-md">
-        <div className="flex items-center justify-between px-2 md:px-4">
+      <div className="shrink-0 border-b border-border bg-surface/80 backdrop-blur-md relative z-40 shadow-md pt-[env(safe-area-inset-top)]">
+        <div className="flex items-center justify-between px-2 md:px-4 py-1">
           <button 
             className="md:hidden p-2 text-primary hover:bg-white/5 rounded mr-2"
             onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
           >
             {mobileSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+          <button 
+            className="p-2 text-primary/70 hover:text-primary hover:bg-white/5 rounded transition-colors mr-2 flex items-center gap-1"
+            onClick={() => setShowSaveManager(true)}
+            title="System Records"
+          >
+            <Save size={18} />
+            <span className="hidden md:inline font-mono text-xs uppercase tracking-wider">Records</span>
           </button>
           <div className="flex-1 overflow-x-auto custom-scrollbar">
             <ConsequenceRibbon consequences={state.consequences} />
@@ -292,6 +408,9 @@ export default function GameSession({ params }: { params: { sessionId: string } 
         {/* Left / Center - Narrative */}
         <div className="flex-1 flex flex-col relative overflow-hidden bg-background">
           <div className="absolute inset-0 pointer-events-none opacity-[0.03] mix-blend-overlay z-0" />
+          {state.chapter === 2 && (
+            <div className="absolute inset-0 pointer-events-none bg-purple-900/10 mix-blend-color z-0 animate-pulse" />
+          )}
           
           <div className="flex-1 overflow-y-auto p-4 md:p-8 relative z-10 custom-scrollbar">
             <EpisodeTitle episodeId={state.episode} chapterTitle={state.chapterTitle} />
@@ -330,9 +449,29 @@ export default function GameSession({ params }: { params: { sessionId: string } 
               harveyStability={state.harveyStability}
             />
           </div>
-          <div className="h-1/2 overflow-hidden">
+          <div className="h-1/2 flex flex-col overflow-hidden">
             {state.activeIdentity === 'batman' ? (
-              <CaseBoard activeCase={state.activeCase} />
+              state.gamePhase === 'no-mans-land' ? (
+                <div className="flex-1 overflow-hidden">
+                  <TerritoryMap 
+                    state={state} 
+                    onAllocateSquad={(districtId, districtName) => {
+                      // Generate a custom choice message for the LLM
+                      handleChoice('tactical_deployment', `Deployed GCPD Squad to ${districtName}.`)
+                    }} 
+                    disabled={isLoading}
+                  />
+                </div>
+              ) : (
+                <>
+                  <div className="flex-1 overflow-hidden min-h-[50%]">
+                    <CaseBoard activeCase={state.activeCase} />
+                  </div>
+                  <div className="h-[200px] shrink-0 border-t border-border/50">
+                    <InventoryPanel />
+                  </div>
+                </>
+              )
             ) : (
               <div className="flex flex-col h-full bg-surface/30 p-4">
                  <h3 className="text-xs font-mono text-secondary tracking-widest uppercase mb-4 border-b border-border/50 pb-2">City Sentiment</h3>
@@ -358,6 +497,18 @@ export default function GameSession({ params }: { params: { sessionId: string } 
                      </div>
                    </div>
 
+                   {state.chapter === 2 && (
+                     <div className="pt-4 border-t border-border/50">
+                       <div className="flex justify-between text-xs font-serif mb-1 text-primary/80">
+                         <span className="text-purple-400">Gotham Chaos</span>
+                         <span className="font-mono text-[10px] text-purple-400">{state.gothamChaos}</span>
+                       </div>
+                       <div className="h-1 bg-background rounded overflow-hidden">
+                         <div className="h-full bg-purple-600 transition-all duration-1000" style={{ width: `${state.gothamChaos}%` }} />
+                       </div>
+                     </div>
+                   )}
+
                    <div className="pt-4 border-t border-border/50">
                      <div className="flex justify-between text-xs font-serif mb-1 text-primary/80">
                        <span>Psyche Cost</span>
@@ -373,6 +524,10 @@ export default function GameSession({ params }: { params: { sessionId: string } 
           </div>
         </div>
       </div>
+
+      {showSaveManager && (
+        <SaveManager onClose={() => setShowSaveManager(false)} />
+      )}
     </div>
   )
 }

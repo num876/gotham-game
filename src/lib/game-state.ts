@@ -13,7 +13,7 @@ export const EP1_INITIAL_STATE: Omit<GameState, 'sessionId'> = {
     { id: 'harvey', name: 'Harvey Dent', role: 'DA — Mayor-elect', knowsIdentity: false, trustLevel: 82, status: 'trusted', lastInteraction: 'One hour ago — phone call', notes: ["Wants Bruce's public endorsement tonight. Hollis is dead. Harvey is frightened and hiding it."] },
     { id: 'gilda', name: 'Gilda Dent', role: "Harvey's wife", knowsIdentity: false, trustLevel: 25, status: 'neutral', lastInteraction: 'Dinner last week', notes: ['Watches Bruce carefully. Warm but not soft. Loves Harvey with open eyes.'] },
     { id: 'gordon', name: 'James Gordon', role: 'GCPD Lieutenant', knowsIdentity: false, trustLevel: 30, status: 'neutral', lastInteraction: 'Crime scene — Hollis', notes: ["Told Batman to leave the scene. Batman didn't. Gordon filed it and moved on. He is deciding what that means."] },
-    { id: 'selina', name: 'Selina Kyle', role: 'Unknown', knowsIdentity: false, trustLevel: 0, status: 'unknown', lastInteraction: 'Rooftop — Hollis scene', notes: ['Was there first. Knows something. Has not decided what to do with it.'] },
+    { id: 'selina', name: 'Selina Kyle / Catwoman', role: 'Unknown', knowsIdentity: false, trustLevel: 0, status: 'unknown', lastInteraction: 'None', notes: ['Unknown master thief operating in the Narrows. Complete stranger.'] },
     { id: 'harley', name: 'Dr. Harleen Quinzel', role: "Arkham — Harvey's therapist", knowsIdentity: false, trustLevel: 10, status: 'unknown', lastInteraction: 'Wayne Foundation gala', notes: ["Said one thing at the gala. Bruce has not stopped thinking about it. She knows he hasn't."] },
     { id: 'lucius', name: 'Lucius Fox', role: 'Wayne Enterprises R&D', knowsIdentity: true, trustLevel: 95, status: 'trusted', lastInteraction: 'Yesterday — applied ballistics', notes: ['Never asks what the tech is for. Doesn\'t need to.'] }
   ],
@@ -28,22 +28,42 @@ export const EP1_INITIAL_STATE: Omit<GameState, 'sessionId'> = {
     keyEvidence: ['Hollis found dead — staged as suicide', 'Falcone prints on scene, deliberately placed', 'Thomas Wayne correspondence — contents unknown']
   },
   consequences: [],
-  bruceReputation: 72,
-  batmanFear: 58,
+  bruceReputation: 85,
+  batmanFear: 20,
   gordonRelationship: 30,
-  cityHope: 35,
-  brucePsycheCost: 20,
+  cityHope: 60,
+  brucePsycheCost: 10,
+  inventory: ['Batarang', 'Smoke Pellet', 'EMP Device', 'Grapple Gun'],
   harveyArc: 'idealist',
   harveyTrust: 82,
   harveyStability: 88,
-  gildaTrust: 25,
+  twoFacePhase: null,
+  gildaTrust: 40,
   gildaKnows: false,
+  gildaArcPhase: 'unsuspecting',
   selinaTrust: 0,
   selinaAlignment: 'neutral',
   harleyStatus: 'dr-quinzel',
+  harleyAlignment: 'neutral',
   gordonArc: 'suspicious',
   falconeStatus: 'untouched',
+  falconePhase: 1,
+  falconeBranch: null,
+  falconeMoleFound: false,
+  falconeLedgerStatus: 'with-falcone',
+  chapter: 1,
+  gothamChaos: 0,
+  jokerPhase: 1,
+  robinTrust: 0,
+  robinPhase: 1,
+  gordonJokerPhase: 1,
+  gildaJokerPhase: 1,
+  hallucinationPhase: 1,
+  falconeMoleIdentity: null,
+  catwomanChoice: null,
   penguinStatus: 'untouched',
+  penguinArcPhase: 1,
+  gcpdMoleArcPhase: 1,
   currentSceneTitle: 'A Phone Call at Midnight',
   choices: [
     {
@@ -71,7 +91,19 @@ export const EP1_INITIAL_STATE: Omit<GameState, 'sessionId'> = {
       hint: 'Sacrifice friendship for tactical advantage.'
     }
   ],
-  gameOver: false
+  gameOver: false,
+  scene45AppealFlag: false,
+  alfredStatus: 'normal',
+  jokerInfectionSpread: 0,
+  harleyChaosBond: 0,
+  gcpdSquadsAvailable: 5,
+  territories: {
+    'downtown': { control: 'contested', squadsAssigned: 0 },
+    'narrows': { control: 'contested', squadsAssigned: 0 },
+    'industrial': { control: 'contested', squadsAssigned: 0 },
+    'diamond': { control: 'contested', squadsAssigned: 0 },
+    'port': { control: 'contested', squadsAssigned: 0 }
+  }
 }
 
 export function initializeGameState(sessionId: string): GameState {

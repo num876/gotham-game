@@ -3,7 +3,10 @@ import OpenAI from 'openai'
 import fs from 'fs/promises'
 import path from 'path'
 
-const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({ 
+  apiKey: process.env.OPENAI_API_KEY,
+  baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/"
+}) : null
 
 export async function POST(req: Request) {
   try {

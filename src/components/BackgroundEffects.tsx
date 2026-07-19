@@ -72,11 +72,6 @@ export function BackgroundEffects({ visualEffect, ambientAudioUrl, sceneImageUrl
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-blue-900/10 to-transparent" />
       )}
 
-      {/* Audio player */}
-      {ambientAudioUrl && (
-        <audio src={ambientAudioUrl} autoPlay loop className="hidden" />
-      )}
-
       {/* Base overlay for blending */}
       <div className="absolute inset-0 bg-background mix-blend-multiply opacity-50 transition-opacity duration-1000" />
 

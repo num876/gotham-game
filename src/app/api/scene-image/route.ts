@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
-import fs from 'fs/promises'
-import path from 'path'
 
 const apiKey = process.env.OPENAI_API_KEY
 const openai = apiKey ? new OpenAI({ apiKey }) : null
@@ -25,27 +23,14 @@ export async function POST(req: Request) {
       model: "dall-e-3",
       prompt: prompt,
       n: 1,
-      size: "1024x1024",
-      response_format: "b64_json"
+      size: "1024x1024"
     })
 
-    const b64 = response.data?.[0]?.b64_json
-    if (!b64) {
+    const url = response.data?.[0]?.url
+    if (!url) {
       throw new Error('No image generated')
     }
 
-    // Save locally
-    const filename = `scene_${sessionId}_turn${turn}.png`
-    const publicPath = path.join(process.cwd(), 'public', 'scenes')
-    
-    // Ensure dir exists
-    await fs.mkdir(publicPath, { recursive: true })
-    
-    const filePath = path.join(publicPath, filename)
-    await fs.writeFile(filePath, Buffer.from(b64, 'base64'))
-
-    const url = `/scenes/${filename}?t=${Date.now()}`
-    
     return NextResponse.json({ url })
 
   } catch (error) {

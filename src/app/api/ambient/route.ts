@@ -1,6 +1,4 @@
 import { NextResponse } from 'next/server'
-import fs from 'fs/promises'
-import path from 'path'
 
 export async function POST(req: Request) {
   try {
@@ -13,17 +11,6 @@ export async function POST(req: Request) {
     const apiKey = process.env.ELEVENLABS_API_KEY
     if (!apiKey) {
       return NextResponse.json({ error: 'ElevenLabs API Key not configured' }, { status: 503 })
-    }
-
-    const ambientDir = path.join(process.cwd(), 'public', 'ambient', sessionId)
-    await fs.mkdir(ambientDir, { recursive: true })
-    const filePath = path.join(ambientDir, `turn-${turn}.mp3`)
-
-    try {
-      await fs.access(filePath)
-      return NextResponse.json({ url: `/ambient/${sessionId}/turn-${turn}.mp3` })
-    } catch {
-      // File does not exist, proceed
     }
 
     const response = await fetch(`https://api.elevenlabs.io/v1/sound-generation`, {
@@ -45,10 +32,13 @@ export async function POST(req: Request) {
       throw new Error(`ElevenLabs API error: ${response.status} ${response.statusText} ${errorData ? JSON.stringify(errorData) : ''}`)
     }
 
-    const buffer = await response.arrayBuffer()
-    await fs.writeFile(filePath, Buffer.from(buffer))
-
-    return NextResponse.json({ url: `/ambient/${sessionId}/turn-${turn}.mp3` })
+    const arrayBuffer = await response.arrayBuffer()
+    
+    return new Response(arrayBuffer, {
+      headers: {
+        'Content-Type': 'audio/mpeg'
+      }
+    })
   } catch (error: unknown) {
     console.error('Ambient generation error:', error)
     return NextResponse.json({ error: (error as Error).message }, { status: 500 })

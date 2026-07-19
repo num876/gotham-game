@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import Image from 'next/image'
+import { useGameStore } from '@/lib/store'
 
 interface SpeakerLine {
   character: string
@@ -43,6 +44,7 @@ export function NarrativeDisplay({ prose, sceneTitle, speakerLines, isLoading, s
 
   const [frameUrl, setFrameUrl] = useState<string | null>(null)
   const [isGeneratingFrame, setIsGeneratingFrame] = useState(false)
+  const { setIsVoicePlaying } = useGameStore()
   
   // Track previous scene to detect when scene changes
   const [lastSceneTitle, setLastSceneTitle] = useState<string | undefined>(undefined)
@@ -79,13 +81,17 @@ export function NarrativeDisplay({ prose, sceneTitle, speakerLines, isLoading, s
   // Start sequence when loading finishes
   useEffect(() => {
     if (!isLoading && speakerLines.length > 0) {
-      setPlayingIndex(0)
+      setPlayingIndex(prev => prev === -1 ? 0 : prev)
     } else if (isLoading) {
       setPlayingIndex(-1)
       setAudioUrl(null)
-      if (audioRef.current) audioRef.current.pause()
+      if (audioRef.current) {
+         audioRef.current.pause()
+         setIsVoicePlaying(false)
+      }
     }
-  }, [speakerLines, isLoading])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading])
 
   // Fetch audio for current playing index
   useEffect(() => {
@@ -121,15 +127,17 @@ export function NarrativeDisplay({ prose, sceneTitle, speakerLines, isLoading, s
     } else {
       setAudioUrl(null)
     }
-  }, [playingIndex, speakerLines])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playingIndex])
 
   // Play when URL is ready
   useEffect(() => {
     if (audioUrl && audioRef.current) {
       audioRef.current.src = audioUrl
-      audioRef.current.play().catch(() => {
+      audioRef.current.play().then(() => {
+        setIsVoicePlaying(true)
+      }).catch(() => {
         console.warn('Auto-play blocked, falling back to visual timing')
-        // Estimate reading time if audio fails: ~60ms per character, min 2 seconds
         const lineText = speakerLines[playingIndex]?.line || ""
         const duration = Math.max(2000, lineText.length * 60)
         
@@ -138,11 +146,20 @@ export function NarrativeDisplay({ prose, sceneTitle, speakerLines, isLoading, s
         }, duration)
       })
     }
-  }, [audioUrl, playingIndex, speakerLines])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioUrl])
 
   return (
     <div className="flex-1 p-8 overflow-y-auto space-y-12 relative custom-scrollbar">
-      <audio ref={audioRef} onEnded={() => setPlayingIndex(prev => prev + 1)} className="hidden" />
+      <audio 
+        ref={audioRef} 
+        onEnded={() => {
+          setIsVoicePlaying(false)
+          setPlayingIndex(prev => prev + 1)
+        }} 
+        onPause={() => setIsVoicePlaying(false)}
+        className="hidden" 
+      />
 
       {/* Storyboard Frame */}
       {(frameUrl || isGeneratingFrame) && (
