@@ -10,15 +10,15 @@ export function AllyPanel({ allies, harveyStability }: AllyPanelProps) {
   const isTwoFace = harveyStability === 0
 
   return (
-    <div className="flex flex-col h-full bg-surface/20 backdrop-blur-xl border-l border-border/50 p-6 space-y-8 relative overflow-hidden">
+    <div className="flex flex-col h-full bg-surface/20 backdrop-blur-xl border-l border-border/50 p-4 md:p-6 relative overflow-hidden">
       {/* Subtle CRT overlay on the sidebar */}
       <div className="absolute inset-0 crt-overlay opacity-20 pointer-events-none" />
 
-      <h3 className="text-[10px] font-mono text-primary/70 tracking-[0.2em] uppercase mb-4 border-b border-border/30 pb-3 flex items-center relative z-10">
+      <h3 className="text-[10px] font-mono text-primary/70 tracking-[0.2em] uppercase mb-3 border-b border-border/30 pb-2 flex items-center relative z-10">
         <span className="w-1.5 h-1.5 bg-primary/70 rounded-full mr-3 animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.5)]" /> BIO-METRICS
       </h3>
       
-      <div className="space-y-6 flex-1 overflow-y-auto pr-2 relative z-10 custom-scrollbar">
+      <div className="space-y-4 md:space-y-6 flex-1 overflow-y-auto pr-1 relative z-10 custom-scrollbar">
         {allies.map((ally) => {
           // Special handling for Harvey
           if (ally.id === 'harvey') {

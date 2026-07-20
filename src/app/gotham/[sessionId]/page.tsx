@@ -15,7 +15,7 @@ import { InventoryPanel } from '@/components/InventoryPanel'
 import { EpilogueViewer } from '@/components/EpilogueViewer'
 import { TerritoryMap } from '@/components/TerritoryMap'
 import { useGameStore } from '@/lib/store'
-import { Menu, X, Save } from 'lucide-react'
+import { Save, BookOpen, Users, FileSearch } from 'lucide-react'
 import { SaveManager } from '@/components/ui/save-manager'
 
 export default function GameSession({ params }: { params: { sessionId: string } }) {
@@ -29,7 +29,7 @@ export default function GameSession({ params }: { params: { sessionId: string } 
   const [ambientAudioUrl, setAmbientAudioUrl] = useState<string | null>(null)
   const [sceneImageUrl, setSceneImageUrl] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+  const [mobileTab, setMobileTab] = useState<'story' | 'allies' | 'intel'>('story')
   const [showSaveManager, setShowSaveManager] = useState(false)
 
   useEffect(() => {
@@ -71,7 +71,7 @@ export default function GameSession({ params }: { params: { sessionId: string } 
   const handleChoice = async (choiceId: string, customMessage?: string) => {
     if (!state || isLoading) return
     setIsLoading(true)
-    setMobileSidebarOpen(false) // auto close sidebar on mobile when making a choice
+    setMobileTab('story') // auto-switch to story tab on mobile when making a choice
     
     // Support custom choice routing (like Territory map deployment)
     const choice = choiceId === 'tactical_deployment' 
@@ -371,24 +371,18 @@ export default function GameSession({ params }: { params: { sessionId: string } 
       <BackgroundEffects visualEffect={visualEffect} sceneImageUrl={sceneImageUrl} />
       <AudioManager ambientAudioUrl={ambientAudioUrl} brucePsycheCost={state.brucePsycheCost} />
 
-      {/* Top Bar - Consequence Ribbon & Identity Toggle */}
-      <div className="shrink-0 border-b border-border bg-surface/80 backdrop-blur-md relative z-40 shadow-md pt-[env(safe-area-inset-top)]">
-        <div className="flex items-center justify-between px-2 md:px-4 py-1">
+      {/* Top Bar */}
+      <div className="shrink-0 border-b border-border bg-surface/80 backdrop-blur-md relative z-40 shadow-md" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+        <div className="flex items-center gap-1 px-2 md:px-4 py-1">
           <button 
-            className="md:hidden p-2 text-primary hover:bg-white/5 rounded mr-2"
-            onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-          >
-            {mobileSidebarOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-          <button 
-            className="p-2 text-primary/70 hover:text-primary hover:bg-white/5 rounded transition-colors mr-2 flex items-center gap-1"
+            className="p-2 text-primary/70 hover:text-primary hover:bg-white/5 rounded transition-colors flex items-center gap-1 shrink-0"
             onClick={() => setShowSaveManager(true)}
             title="System Records"
           >
-            <Save size={18} />
+            <Save size={16} />
             <span className="hidden md:inline font-mono text-xs uppercase tracking-wider">Records</span>
           </button>
-          <div className="flex-1 overflow-x-auto custom-scrollbar">
+          <div className="flex-1 overflow-x-auto custom-scrollbar min-w-0">
             <ConsequenceRibbon consequences={state.consequences} />
           </div>
           <div className="shrink-0 border-x border-border/50 bg-background/50 ml-auto">
@@ -401,16 +395,15 @@ export default function GameSession({ params }: { params: { sessionId: string } 
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden relative z-10">
-        {/* Left / Center - Narrative */}
+      {/* ===== DESKTOP LAYOUT ===== */}
+      <div className="hidden md:flex flex-1 overflow-hidden relative z-10">
+        {/* Center — Narrative */}
         <div className="flex-1 flex flex-col relative overflow-hidden bg-background">
           <div className="absolute inset-0 pointer-events-none opacity-[0.03] mix-blend-overlay z-0" />
           {state.chapter === 2 && (
             <div className="absolute inset-0 pointer-events-none bg-purple-900/10 mix-blend-color z-0 animate-pulse" />
           )}
-          
-          <div className="flex-1 overflow-y-auto p-4 md:p-8 relative z-10 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto p-8 relative z-10 custom-scrollbar">
             <EpisodeTitle episodeId={state.episode} chapterTitle={state.chapterTitle} />
             <NarrativeDisplay 
               prose={narrative} 
@@ -421,7 +414,6 @@ export default function GameSession({ params }: { params: { sessionId: string } 
               turn={state.turn}
             />
           </div>
-          
           <div className="z-20 mt-auto">
             <DecisionPanel 
               choices={state.choices} 
@@ -431,21 +423,10 @@ export default function GameSession({ params }: { params: { sessionId: string } 
           </div>
         </div>
 
-        {/* Mobile Sidebar Backdrop */}
-        {mobileSidebarOpen && (
-          <div 
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden" 
-            onClick={() => setMobileSidebarOpen(false)} 
-          />
-        )}
-
-        {/* Right Sidebar - Allies & Case */}
-        <div className={`${mobileSidebarOpen ? 'translate-x-0' : 'translate-x-full'} md:translate-x-0 absolute right-0 top-0 bottom-0 md:relative w-[320px] shrink-0 flex flex-col border-l border-border bg-surface/95 md:bg-surface/50 z-50 shadow-[-5px_0_20px_rgba(0,0,0,0.5)] backdrop-blur-md overflow-hidden transition-transform duration-300`}>
+        {/* Right Sidebar */}
+        <div className="w-[320px] shrink-0 flex flex-col border-l border-border bg-surface/50 z-50 backdrop-blur-md overflow-hidden">
           <div className="h-1/2 overflow-hidden border-b border-border/50">
-            <AllyPanel 
-              allies={state.allies}
-              harveyStability={state.harveyStability}
-            />
+            <AllyPanel allies={state.allies} harveyStability={state.harveyStability} />
           </div>
           <div className="h-1/2 flex flex-col overflow-hidden">
             {state.activeIdentity === 'batman' ? (
@@ -454,7 +435,6 @@ export default function GameSession({ params }: { params: { sessionId: string } 
                   <TerritoryMap 
                     state={state} 
                     onAllocateSquad={(districtId, districtName) => {
-                      // Generate a custom choice message for the LLM
                       handleChoice('tactical_deployment', `Deployed GCPD Squad to ${districtName}.`)
                     }} 
                     disabled={isLoading}
@@ -472,55 +452,200 @@ export default function GameSession({ params }: { params: { sessionId: string } 
               )
             ) : (
               <div className="flex flex-col h-full bg-surface/30 p-4">
-                 <h3 className="text-xs font-mono text-secondary tracking-widest uppercase mb-4 border-b border-border/50 pb-2">City Sentiment</h3>
-                 
-                 <div className="space-y-4">
-                   <div>
-                     <div className="flex justify-between text-xs font-serif mb-1 text-primary/80">
-                       <span>Wayne Foundation Rep</span>
-                       <span className="font-mono text-[10px]">{state.bruceReputation}</span>
-                     </div>
-                     <div className="h-1 bg-background rounded overflow-hidden">
-                       <div className="h-full bg-bruce/60 transition-all duration-1000" style={{ width: `${state.bruceReputation}%` }} />
-                     </div>
-                   </div>
-
-                   <div>
-                     <div className="flex justify-between text-xs font-serif mb-1 text-primary/80">
-                       <span>City Hope</span>
-                       <span className="font-mono text-[10px]">{state.cityHope}</span>
-                     </div>
-                     <div className="h-1 bg-background rounded overflow-hidden">
-                       <div className="h-full bg-primary/40 transition-all duration-1000" style={{ width: `${state.cityHope}%` }} />
-                     </div>
-                   </div>
-
-                   {state.chapter === 2 && (
-                     <div className="pt-4 border-t border-border/50">
-                       <div className="flex justify-between text-xs font-serif mb-1 text-primary/80">
-                         <span className="text-purple-400">Gotham Chaos</span>
-                         <span className="font-mono text-[10px] text-purple-400">{state.gothamChaos}</span>
-                       </div>
-                       <div className="h-1 bg-background rounded overflow-hidden">
-                         <div className="h-full bg-purple-600 transition-all duration-1000" style={{ width: `${state.gothamChaos}%` }} />
-                       </div>
-                     </div>
-                   )}
-
-                   <div className="pt-4 border-t border-border/50">
-                     <div className="flex justify-between text-xs font-serif mb-1 text-primary/80">
-                       <span>Psyche Cost</span>
-                       <span className="font-mono text-[10px] text-red-500">{state.brucePsycheCost}</span>
-                     </div>
-                     <div className="h-1 bg-background rounded overflow-hidden">
-                       <div className="h-full bg-red-900/60 transition-all duration-1000" style={{ width: `${state.brucePsycheCost}%` }} />
-                     </div>
-                   </div>
-                 </div>
+                <h3 className="text-xs font-mono text-secondary tracking-widest uppercase mb-4 border-b border-border/50 pb-2">City Sentiment</h3>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-xs font-serif mb-1 text-primary/80">
+                      <span>Wayne Foundation Rep</span>
+                      <span className="font-mono text-[10px]">{state.bruceReputation}</span>
+                    </div>
+                    <div className="h-1 bg-background rounded overflow-hidden">
+                      <div className="h-full bg-bruce/60 transition-all duration-1000" style={{ width: `${state.bruceReputation}%` }} />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-xs font-serif mb-1 text-primary/80">
+                      <span>City Hope</span>
+                      <span className="font-mono text-[10px]">{state.cityHope}</span>
+                    </div>
+                    <div className="h-1 bg-background rounded overflow-hidden">
+                      <div className="h-full bg-primary/40 transition-all duration-1000" style={{ width: `${state.cityHope}%` }} />
+                    </div>
+                  </div>
+                  {state.chapter === 2 && (
+                    <div className="pt-4 border-t border-border/50">
+                      <div className="flex justify-between text-xs font-serif mb-1 text-primary/80">
+                        <span className="text-purple-400">Gotham Chaos</span>
+                        <span className="font-mono text-[10px] text-purple-400">{state.gothamChaos}</span>
+                      </div>
+                      <div className="h-1 bg-background rounded overflow-hidden">
+                        <div className="h-full bg-purple-600 transition-all duration-1000" style={{ width: `${state.gothamChaos}%` }} />
+                      </div>
+                    </div>
+                  )}
+                  <div className="pt-4 border-t border-border/50">
+                    <div className="flex justify-between text-xs font-serif mb-1 text-primary/80">
+                      <span>Psyche Cost</span>
+                      <span className="font-mono text-[10px] text-red-500">{state.brucePsycheCost}</span>
+                    </div>
+                    <div className="h-1 bg-background rounded overflow-hidden">
+                      <div className="h-full bg-red-900/60 transition-all duration-1000" style={{ width: `${state.brucePsycheCost}%` }} />
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
         </div>
+      </div>
+
+      {/* ===== MOBILE LAYOUT — tab-based ===== */}
+      <div className="flex md:hidden flex-1 flex-col overflow-hidden relative z-10">
+        {/* Tab content */}
+        <div className="flex-1 overflow-hidden relative bg-background">
+          {state.chapter === 2 && (
+            <div className="absolute inset-0 pointer-events-none bg-purple-900/10 mix-blend-color z-0 animate-pulse" />
+          )}
+
+          {/* STORY TAB */}
+          {mobileTab === 'story' && (
+            <div className="flex flex-col h-full">
+              <div className="flex-1 overflow-y-auto px-3 pt-3 pb-2 relative z-10 custom-scrollbar">
+                <EpisodeTitle episodeId={state.episode} chapterTitle={state.chapterTitle} />
+                <NarrativeDisplay 
+                  prose={narrative} 
+                  speakerLines={speakerLines} 
+                  isLoading={isLoading}
+                  sceneTitle={sceneTitle}
+                  sessionId={params.sessionId}
+                  turn={state.turn}
+                />
+              </div>
+              <div className="z-20 mt-auto shrink-0">
+                <DecisionPanel 
+                  choices={state.choices} 
+                  onChoice={handleChoice}
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* ALLIES TAB */}
+          {mobileTab === 'allies' && (
+            <div className="h-full overflow-y-auto custom-scrollbar">
+              <AllyPanel allies={state.allies} harveyStability={state.harveyStability} />
+            </div>
+          )}
+
+          {/* INTEL TAB */}
+          {mobileTab === 'intel' && (
+            <div className="h-full overflow-y-auto custom-scrollbar">
+              {state.activeIdentity === 'batman' ? (
+                state.gamePhase === 'no-mans-land' ? (
+                  <div className="h-full">
+                    <TerritoryMap 
+                      state={state} 
+                      onAllocateSquad={(districtId, districtName) => {
+                        handleChoice('tactical_deployment', `Deployed GCPD Squad to ${districtName}.`)
+                      }} 
+                      disabled={isLoading}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex flex-col">
+                    <CaseBoard activeCase={state.activeCase} />
+                    <InventoryPanel />
+                  </div>
+                )
+              ) : (
+                <div className="flex flex-col p-4 gap-4">
+                  <h3 className="text-xs font-mono text-secondary tracking-widest uppercase border-b border-border/50 pb-2">City Sentiment</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex justify-between text-xs font-serif mb-1 text-primary/80">
+                        <span>Wayne Foundation Rep</span>
+                        <span className="font-mono text-[10px]">{state.bruceReputation}</span>
+                      </div>
+                      <div className="h-1.5 bg-background rounded overflow-hidden">
+                        <div className="h-full bg-bruce/60 transition-all duration-1000" style={{ width: `${state.bruceReputation}%` }} />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-xs font-serif mb-1 text-primary/80">
+                        <span>City Hope</span>
+                        <span className="font-mono text-[10px]">{state.cityHope}</span>
+                      </div>
+                      <div className="h-1.5 bg-background rounded overflow-hidden">
+                        <div className="h-full bg-primary/40 transition-all duration-1000" style={{ width: `${state.cityHope}%` }} />
+                      </div>
+                    </div>
+                    {state.chapter === 2 && (
+                      <div className="pt-3 border-t border-border/50">
+                        <div className="flex justify-between text-xs font-serif mb-1 text-primary/80">
+                          <span className="text-purple-400">Gotham Chaos</span>
+                          <span className="font-mono text-[10px] text-purple-400">{state.gothamChaos}</span>
+                        </div>
+                        <div className="h-1.5 bg-background rounded overflow-hidden">
+                          <div className="h-full bg-purple-600 transition-all duration-1000" style={{ width: `${state.gothamChaos}%` }} />
+                        </div>
+                      </div>
+                    )}
+                    <div className="pt-3 border-t border-border/50">
+                      <div className="flex justify-between text-xs font-serif mb-1 text-primary/80">
+                        <span>Psyche Cost</span>
+                        <span className="font-mono text-[10px] text-red-500">{state.brucePsycheCost}</span>
+                      </div>
+                      <div className="h-1.5 bg-background rounded overflow-hidden">
+                        <div className="h-full bg-red-900/60 transition-all duration-1000" style={{ width: `${state.brucePsycheCost}%` }} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Bottom Tab Bar */}
+        <nav 
+          className="shrink-0 flex border-t border-border bg-surface/95 backdrop-blur-xl"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        >
+          <button
+            onClick={() => setMobileTab('story')}
+            className={`flex-1 flex flex-col items-center justify-center gap-1 py-2 text-[10px] font-mono tracking-widest uppercase transition-colors duration-200 ${
+              mobileTab === 'story' 
+                ? 'text-primary border-t-2 border-primary -mt-px' 
+                : 'text-secondary/60 hover:text-secondary'
+            }`}
+          >
+            <BookOpen size={18} />
+            <span>Story</span>
+          </button>
+          <button
+            onClick={() => setMobileTab('allies')}
+            className={`flex-1 flex flex-col items-center justify-center gap-1 py-2 text-[10px] font-mono tracking-widest uppercase transition-colors duration-200 ${
+              mobileTab === 'allies' 
+                ? 'text-primary border-t-2 border-primary -mt-px' 
+                : 'text-secondary/60 hover:text-secondary'
+            }`}
+          >
+            <Users size={18} />
+            <span>Allies</span>
+          </button>
+          <button
+            onClick={() => setMobileTab('intel')}
+            className={`flex-1 flex flex-col items-center justify-center gap-1 py-2 text-[10px] font-mono tracking-widest uppercase transition-colors duration-200 ${
+              mobileTab === 'intel' 
+                ? 'text-primary border-t-2 border-primary -mt-px' 
+                : 'text-secondary/60 hover:text-secondary'
+            }`}
+          >
+            <FileSearch size={18} />
+            <span>Intel</span>
+          </button>
+        </nav>
       </div>
 
       {showSaveManager && (
