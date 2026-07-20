@@ -150,7 +150,7 @@ export function NarrativeDisplay({ prose, sceneTitle, speakerLines, isLoading, s
   }, [audioUrl])
 
   return (
-    <div className="flex-1 p-8 overflow-y-auto space-y-12 relative custom-scrollbar">
+    <div className="space-y-6 md:space-y-12 relative">
       <audio 
         ref={audioRef} 
         onEnded={() => {
@@ -163,7 +163,7 @@ export function NarrativeDisplay({ prose, sceneTitle, speakerLines, isLoading, s
 
       {/* Storyboard Frame */}
       {(frameUrl || isGeneratingFrame) && (
-        <div className="max-w-4xl mx-auto mb-12 relative w-full aspect-video md:aspect-[21/9] bg-surface overflow-hidden border border-border/50 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-center [clip-path:polygon(20px_0,100%_0,100%_calc(100%-20px),calc(100%-20px)_100%,0_100%,0_20px)] group">
+        <div className="relative w-full aspect-[4/3] md:aspect-[21/9] bg-surface overflow-hidden border border-border/50 shadow-[0_10px_30px_rgba(0,0,0,0.5)] md:shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-center [clip-path:polygon(12px_0,100%_0,100%_calc(100%-12px),calc(100%-12px)_100%,0_100%,0_12px)] md:[clip-path:polygon(20px_0,100%_0,100%_calc(100%-20px),calc(100%-20px)_100%,0_100%,0_20px)] group">
           {frameUrl ? (
             <>
               <Image src={frameUrl} alt={sceneTitle || 'Scene Image'} fill className="object-cover transition-transform duration-[20s] ease-linear group-hover:scale-110 grayscale-[0.2]" />
@@ -171,65 +171,64 @@ export function NarrativeDisplay({ prose, sceneTitle, speakerLines, isLoading, s
               <div className="absolute inset-0 crt-overlay opacity-30 mix-blend-overlay" />
             </>
           ) : (
-            <div className="flex flex-col items-center justify-center text-primary/50 space-y-6">
-              <div className="relative w-16 h-16">
+            <div className="flex flex-col items-center justify-center text-primary/50 space-y-4">
+              <div className="relative w-10 h-10 md:w-16 md:h-16">
                 <div className="absolute inset-0 border-2 border-alert/20 border-t-alert rounded-full animate-spin" />
-                <div className="absolute inset-2 border-2 border-primary/20 border-b-primary rounded-full animate-[spin_2s_linear_infinite_reverse]" />
-                <div className="absolute inset-4 border-2 border-alert/20 border-l-alert rounded-full animate-[spin_3s_linear_infinite]" />
+                <div className="absolute inset-1.5 border-2 border-primary/20 border-b-primary rounded-full animate-[spin_2s_linear_infinite_reverse]" />
+                <div className="absolute inset-3 border-2 border-alert/20 border-l-alert rounded-full animate-[spin_3s_linear_infinite]" />
               </div>
-              <span className="font-mono text-xs uppercase tracking-[0.3em] animate-pulse">Establishing Feed...</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.3em] animate-pulse">Establishing Feed...</span>
             </div>
           )}
           
           {sceneTitle && (
-            <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-background to-transparent flex justify-between items-end">
-              <h2 className="font-serif text-2xl md:text-4xl text-white tracking-wide shadow-black drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">{sceneTitle}</h2>
-              <span className="font-mono text-[10px] text-alert tracking-widest uppercase mb-1">REC // 00:00:00</span>
+            <div className="absolute bottom-0 left-0 right-0 p-3 md:p-6 bg-gradient-to-t from-background to-transparent flex justify-between items-end">
+              <h2 className="font-serif text-lg md:text-4xl text-white tracking-wide drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">{sceneTitle}</h2>
+              <span className="font-mono text-[9px] md:text-[10px] text-alert tracking-widest uppercase mb-1">REC // 00:00:00</span>
             </div>
           )}
         </div>
       )}
 
       {prose && (
-        <div className="prose prose-invert prose-p:font-serif prose-p:text-base md:prose-p:text-2xl prose-p:leading-[1.8] prose-p:text-primary/80 max-w-2xl mx-auto tracking-wide relative">
-          {/* Subtle decorative quote/line next to prose */}
+        <div className="prose prose-invert prose-p:font-serif prose-p:text-sm md:prose-p:text-2xl prose-p:leading-relaxed md:prose-p:leading-[1.8] prose-p:text-primary/80 max-w-2xl mx-auto tracking-wide relative">
           <div className="absolute -left-12 top-2 bottom-2 w-px bg-gradient-to-b from-transparent via-border/50 to-transparent hidden md:block" />
           {prose.split('\n\n').map((p, i) => (
-            <p key={i} className="mb-6 drop-shadow-sm">{p}</p>
+            <p key={i} className="mb-4 md:mb-6 drop-shadow-sm">{p}</p>
           ))}
         </div>
       )}
 
       {speakerLines.length > 0 && (
-        <div className="max-w-2xl mx-auto mt-16 space-y-10 font-serif">
+        <div className="max-w-2xl mx-auto space-y-5 md:space-y-10 mt-4 md:mt-16 font-serif">
           {speakerLines.map((s, i) => {
             const avatar = getAvatar(s.character)
             const isPlaying = playingIndex === i
             
             return (
-              <div key={i} className={`flex space-x-6 items-start transition-all duration-700 ${isPlaying ? 'opacity-100 transform translate-x-2' : 'opacity-50 grayscale transform translate-x-0'}`}>
+              <div key={i} className={`flex gap-3 md:gap-6 items-start transition-all duration-700 ${isPlaying ? 'opacity-100 translate-x-1 md:translate-x-2' : 'opacity-50 grayscale'}`}>
                 {avatar && (
-                  <div className={`w-14 h-14 shrink-0 mt-1 shadow-lg transition-all duration-700 [clip-path:polygon(10px_0,100%_0,100%_calc(100%-10px),calc(100%-10px)_100%,0_100%,0_10px)] relative ${isPlaying ? 'border-none' : 'border border-border/50'}`}>
+                  <div className={`w-10 h-10 md:w-14 md:h-14 shrink-0 mt-1 shadow-lg transition-all duration-700 [clip-path:polygon(7px_0,100%_0,100%_calc(100%-7px),calc(100%-7px)_100%,0_100%,0_7px)] md:[clip-path:polygon(10px_0,100%_0,100%_calc(100%-10px),calc(100%-10px)_100%,0_100%,0_10px)] relative ${isPlaying ? 'border-none' : 'border border-border/50'}`}>
                      {isPlaying && (
                        <div className="absolute inset-0 bg-alert animate-pulse mix-blend-overlay opacity-30" />
                      )}
                     <Image src={`/characters/${avatar}?v=${Date.now()}`} alt={s.character} fill className={`object-cover ${isPlaying ? 'contrast-125' : 'contrast-75'}`} />
                   </div>
                 )}
-                <div className="flex flex-col relative flex-1">
-                  <div className="flex items-center space-x-4 mb-2">
-                    <span className="text-[10px] font-mono text-alert tracking-[0.3em] uppercase font-bold">
+                <div className="flex flex-col relative flex-1 min-w-0">
+                  <div className="flex items-center gap-2 md:gap-4 mb-1.5 md:mb-2">
+                    <span className="text-[9px] md:text-[10px] font-mono text-alert tracking-[0.2em] md:tracking-[0.3em] uppercase font-bold truncate">
                       {s.character}
                     </span>
                     {isPlaying && isFetchingAudio && (
-                      <span className="flex space-x-1">
+                      <span className="flex gap-1">
                         <span className="w-1.5 h-1.5 bg-alert/50" />
                         <span className="w-1.5 h-1.5 bg-alert animate-pulse" />
                         <span className="w-1.5 h-1.5 bg-alert/50" />
                       </span>
                     )}
                     {isPlaying && !isFetchingAudio && (
-                      <span className="flex space-x-1 items-end h-3">
+                      <span className="flex gap-0.5 items-end h-3">
                         <span className="w-0.5 bg-alert h-full audio-bar [animation-delay:0.1s]" />
                         <span className="w-0.5 bg-alert h-2/3 audio-bar [animation-delay:0.3s]" />
                         <span className="w-0.5 bg-alert h-full audio-bar [animation-delay:0.5s]" />
@@ -237,7 +236,7 @@ export function NarrativeDisplay({ prose, sceneTitle, speakerLines, isLoading, s
                       </span>
                     )}
                   </div>
-                  <p className={`text-2xl text-primary italic border-l-2 pl-6 py-1 leading-[1.6] transition-colors duration-500 ${isPlaying ? 'border-alert/70 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]' : 'border-border/30'}`}>
+                  <p className={`text-sm md:text-2xl text-primary italic border-l-2 pl-3 md:pl-6 py-1 leading-snug md:leading-[1.6] transition-colors duration-500 ${isPlaying ? 'border-alert/70 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]' : 'border-border/30'}`}>
                     &quot;{s.line}&quot;
                   </p>
                 </div>
@@ -248,8 +247,8 @@ export function NarrativeDisplay({ prose, sceneTitle, speakerLines, isLoading, s
       )}
 
       {isLoading && (
-        <div className="flex justify-center mt-20 mb-10">
-          <div className="flex items-center space-x-3 text-secondary font-mono text-[10px] tracking-widest uppercase">
+        <div className="flex justify-center py-8 md:py-16">
+          <div className="flex items-center gap-3 text-secondary font-mono text-[10px] tracking-widest uppercase">
             <span className="w-8 h-px bg-secondary/50" />
             <span className="animate-pulse">Awaiting Transmission</span>
             <span className="w-8 h-px bg-secondary/50" />
