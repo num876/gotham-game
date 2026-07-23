@@ -206,7 +206,7 @@ export function NarrativeDisplay({ prose, sceneTitle, speakerLines, isLoading, s
             const isPlaying = playingIndex === i
             
             return (
-              <div key={i} className={`flex gap-3 md:gap-6 items-start transition-all duration-700 ${isPlaying ? 'opacity-100 translate-x-1 md:translate-x-2' : 'opacity-50 grayscale'}`}>
+              <div key={i} className={`flex gap-3 md:gap-6 items-start transition-all duration-700 ${isPlaying ? 'opacity-100 translate-x-1 md:translate-x-2' : 'opacity-50'}`}>
                 {avatar && (
                   <div className={`w-10 h-10 md:w-14 md:h-14 shrink-0 mt-1 shadow-lg transition-all duration-700 [clip-path:polygon(7px_0,100%_0,100%_calc(100%-7px),calc(100%-7px)_100%,0_100%,0_7px)] md:[clip-path:polygon(10px_0,100%_0,100%_calc(100%-10px),calc(100%-10px)_100%,0_100%,0_10px)] relative ${isPlaying ? 'border-none' : 'border border-border/50'}`}>
                      {isPlaying && (

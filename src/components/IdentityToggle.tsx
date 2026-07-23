@@ -9,7 +9,12 @@ interface IdentityToggleProps {
 
 export function IdentityToggle({ identity, onToggle, disabled }: IdentityToggleProps) {
   return (
-    <div className="flex items-center justify-center p-1 md:p-2">
+    <div className="flex items-center justify-center p-1 md:p-2 gap-2 md:gap-4">
+      {/* Bruce Portrait */}
+      <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden border-2 transition-all duration-300 ${identity === 'bruce' ? 'border-[#c9a84c] shadow-[0_0_10px_rgba(201,168,76,0.5)] scale-110' : 'border-transparent opacity-50 scale-90'}`}>
+        <img src="/characters/bruce_wayne.png" alt="Bruce" className="w-full h-full object-cover" />
+      </div>
+
       <div className="relative flex bg-black border border-border shadow-inner p-0.5 md:p-1">
         <button
           onClick={onToggle}
@@ -36,6 +41,11 @@ export function IdentityToggle({ identity, onToggle, disabled }: IdentityToggleP
           <Shield size={12} />
           <span>BAT</span>
         </button>
+      </div>
+      
+      {/* Batman Portrait */}
+      <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden border-2 transition-all duration-300 ${identity === 'batman' ? 'border-red-600 shadow-[0_0_10px_rgba(255,0,0,0.5)] scale-110' : 'border-transparent opacity-50 scale-90'}`}>
+        <img src="/characters/batman.png" alt="Batman" className="w-full h-full object-cover" />
       </div>
     </div>
   )

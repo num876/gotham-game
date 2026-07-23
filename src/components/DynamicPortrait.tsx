@@ -50,7 +50,7 @@ export function DynamicPortrait({ characterId, characterName, className = "" }: 
         src={src} 
         alt={characterName} 
         fill
-        className={`object-cover grayscale opacity-80 transition-all duration-700 ${isGenerating ? 'opacity-30 scale-105 blur-sm' : ''}`} 
+        className={`object-cover opacity-100 transition-all duration-700 ${isGenerating ? 'opacity-30 scale-105 blur-sm' : ''}`} 
         onError={handleError}
       />
       {isGenerating && (

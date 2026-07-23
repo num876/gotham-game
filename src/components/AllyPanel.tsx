@@ -29,7 +29,7 @@ export function AllyPanel({ allies, harveyStability }: AllyPanelProps) {
                     <DynamicPortrait
                       characterId={isTwoFace ? 'two_face' : 'harvey'}
                       characterName={isTwoFace ? 'Two-Face' : 'Harvey Dent'}
-                      className="w-full h-full object-cover border border-border/50 grayscale opacity-80 group-hover:opacity-100 group-hover:grayscale-0 transition-all duration-500"
+                      className="w-full h-full object-cover border border-border/50 opacity-100 transition-all duration-500"
                     />
                   </div>
                   <div className="flex-1">
@@ -71,7 +71,7 @@ export function AllyPanel({ allies, harveyStability }: AllyPanelProps) {
                   <DynamicPortrait 
                     characterId={ally.name.toLowerCase().includes('quinn') ? 'harley_quinn' : ally.id === 'harley' ? 'quinzel' : ally.name.toLowerCase().includes('catwoman') ? 'catwoman' : ally.id}
                     characterName={ally.name}
-                    className="w-full h-full object-cover border border-border/50 opacity-80 group-hover:opacity-100 transition-all duration-500"
+                    className="w-full h-full object-cover border border-border/50 opacity-100 transition-all duration-500"
                   />
                 </div>
                 <div className="flex-1">

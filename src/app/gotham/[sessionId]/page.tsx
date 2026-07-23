@@ -375,27 +375,34 @@ export default function GameSession({ params }: { params: { sessionId: string } 
       <BackgroundEffects visualEffect={visualEffect} sceneImageUrl={sceneImageUrl} />
       <AudioManager ambientAudioUrl={ambientAudioUrl} brucePsycheCost={state.brucePsycheCost} />
 
-      {/* Top Bar */}
       <div className="shrink-0 border-b border-border bg-surface/80 backdrop-blur-md relative z-40 shadow-md" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-        <div className="flex items-center gap-1 px-2 md:px-4 py-1">
-          <button 
-            className="p-2 text-primary/70 hover:text-primary hover:bg-white/5 rounded transition-colors flex items-center gap-1 shrink-0"
-            onClick={() => setShowSaveManager(true)}
-            title="System Records"
-          >
-            <Save size={16} />
-            <span className="hidden md:inline font-mono text-xs uppercase tracking-wider">Records</span>
-          </button>
-          <div className="flex-1 overflow-x-auto custom-scrollbar min-w-0">
-            <ConsequenceRibbon consequences={state.consequences} />
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 md:gap-4 px-2 md:px-4 py-1">
+          <div className="flex items-center gap-2 overflow-hidden min-w-0">
+            <button 
+              className="p-2 text-primary/70 hover:text-primary hover:bg-white/5 rounded transition-colors flex items-center gap-1 shrink-0"
+              onClick={() => setShowSaveManager(true)}
+              title="System Records"
+            >
+              <Save size={16} />
+              <span className="hidden xl:inline font-mono text-xs uppercase tracking-wider">Records</span>
+            </button>
+            <div className="flex-1 overflow-x-auto custom-scrollbar min-w-0 hidden md:block">
+              <ConsequenceRibbon consequences={state.consequences} />
+            </div>
           </div>
-          <div className="shrink-0 border-x border-border/50 bg-background/50 ml-auto">
+          <div className="shrink-0 border-x border-border/50 bg-background/50 flex justify-center">
             <IdentityToggle 
               identity={state.activeIdentity} 
               onToggle={handleIdentityToggle}
               disabled={!state.identitySwitchAvailable || isLoading}
             />
           </div>
+          <div className="flex items-center justify-end overflow-hidden min-w-0 md:hidden">
+             <div className="flex-1 overflow-x-auto custom-scrollbar min-w-0">
+              <ConsequenceRibbon consequences={state.consequences} />
+            </div>
+          </div>
+          <div className="hidden md:flex flex-1 justify-end"></div>
         </div>
       </div>
 
