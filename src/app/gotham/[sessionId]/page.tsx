@@ -188,7 +188,10 @@ export default function GameSession({ params }: { params: { sessionId: string } 
           if (data.choices && data.choices.length > 0) {
             nextState.choices = data.choices;
             
-            // Trigger background pre-generation of these new choices
+            // PREGENERATION DISABLED to avoid hitting Gemini Free Tier 15 RPM limits.
+            // With 3 choices per turn, pregeneration burns 6+ requests per turn in the background.
+            // Gemini is fast enough that we can just stream the choice live when the user clicks it!
+            /*
             fetch('/api/pregenerate', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -199,6 +202,7 @@ export default function GameSession({ params }: { params: { sessionId: string } 
                 narrativeSummary
               })
             }).catch(console.error);
+            */
           }
           if (data.newConsequence) nextState.consequences = [...nextState.consequences, data.newConsequence];
           if (data.statDeltas) {

@@ -1,0 +1,79 @@
+{
+  "narrative": "Batman moved silently through Hollis’s ransacked penthouse, the rain-streaked skylight above offering a fractured view of Gotham’s stormy night. His thermal vision highlighted disturbed dust, faint footprints, and smudged prints—all deliberately placed. Then, a shadow detached itself from the glass, dropping light as a feather. A woman in black leather, sleek and dangerous, landed softly behind him. Her movements were fluid, predatory. She hadn’t seen him, not yet. Batman turned, already speaking as she scanned the room with a practiced eye.",
+  "sceneTitle": "The Hollis Apartment — Uninvited Guest",
+  "sceneImagePrompt": "Gritty cinematic 35mm noir photograph: A lavish, ransacked Gotham penthouse apartment at night. Rain streaks down a shattered skylight, casting fractured, wet reflections on expensive but overturned furniture. The room is dimly lit by a single, exposed bare bulb, casting long, stark shadows. Dust motes dance in the weak light. A broken vase lies on a Persian rug. Wet footprints mar the polished hardwood floor. No characters present.",
+  "ambientAudioPrompt": "Distant city hum, dripping water from a shattered skylight, soft creak of old wood.",
+  "visualEffect": "office",
+  "speakerLines": [
+    {
+      "character": "Catwoman",
+      "line": "Well, look at what the bat dragged in. Figured I'd have this place all to myself.",
+      "emotion": "sarcastic"
+    },
+    {
+      "character": "Batman",
+      "line": "Information. For passage. Now.",
+      "emotion": "blunt"
+    },
+    {
+      "character": "Catwoman",
+      "line": "Oh, a man of few words. I like that in a stranger. Intriguing. What's it worth to you, darling? My information doesn't come cheap.",
+      "emotion": "seductive"
+    },
+    {
+      "character": "Batman",
+      "line": "Freedom.",
+      "emotion": "intimidating"
+    },
+    {
+      "character": "Catwoman",
+      "line": "Fine. Before Falcone's meatheads showed up… there was someone else. Slender, quick. Saw 'em making a quick exit out the service stairwell. Not a cop. Not one of ours.",
+      "emotion": "serious"
+    },
+    {
+      "character": "Batman",
+      "line": "Confirmed.",
+      "emotion": "stoic"
+    }
+  ],
+  "newConsequence": null,
+  "caseUpdate": {
+    "newEvidence": "A second, unknown figure was at the Hollis crime scene before Falcone's men arrived, leaving via the service stairwell.",
+    "suspectId": null,
+    "newSuspectNote": null
+  },
+  "scannableEvidence": null,
+  "statDeltas": {
+    "harveyStability": 0,
+    "gordonRelationship": 0,
+    "selinaTrust": 12,
+    "gildaTrust": 0,
+    "cityHope": 0,
+    "brucePsycheCost": 0
+  },
+  "harveyArcUpdate": null,
+  "twoFacePhaseUpdate": null,
+  "gildaArcPhaseUpdate": null,
+  "gildaKnowsUpdate": null,
+  "territoriesUpdate": null,
+  "episodeUpdate": null,
+  "scene45AppealFlagUpdate": null,
+  "outcomeUpdate": null,
+  "alfredStatusUpdate": null,
+  "jokerInfectionSpreadUpdate": null,
+  "harleyChaosBondUpdate": null,
+  "harleyStatusUpdate": null,
+  "harleyAlignmentUpdate": null,
+  "gordonArcUpdate": null,
+  "falconeStatusUpdate": null,
+  "falconePhaseUpdate": null,
+  "falconeBranchUpdate": null,
+  "falconeMoleFoundUpdate": null,
+  "falconeMoleIdentityUpdate": null,
+  "catwomanChoiceUpdate": {
+    "choice": "team-up"
+  },
+  "penguinStatusUpdate": null,
+  "identitySwitchAvailable": true,
+  "choices": []
+}
