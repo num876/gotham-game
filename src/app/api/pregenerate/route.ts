@@ -7,7 +7,7 @@ import { retrieveRelevantMemories } from '@/lib/vector-store'
 import { generateHarleyDialogue } from '@/lib/agents/harley'
 
 const apiKey = process.env.OPENAI_API_KEY
-const openai = apiKey ? new OpenAI({ apiKey, baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/" }) : null
+const openai = apiKey ? new OpenAI({ apiKey }) : null
 
 export async function POST(req: Request) {
   if (!openai) {
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
         }
 
         const response = await openai.chat.completions.create({
-          model: 'gemini-1.5-pro',
+          model: 'gpt-4o',
           response_format: { type: "json_object" }, // we use json_object for pregen as json_schema is huge to duplicate here, but we can trust the LLM mostly
           messages: [
             { role: 'system', content: finalSystemPrompt + `\n\nRespond with valid JSON following the narrative_response schema.` },

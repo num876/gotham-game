@@ -2,7 +2,7 @@ import OpenAI from 'openai'
 import { GameState } from '@/types/game'
 
 const apiKey = process.env.OPENAI_API_KEY
-const openai = apiKey ? new OpenAI({ apiKey, baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/" }) : null
+const openai = apiKey ? new OpenAI({ apiKey }) : null
 
 export async function generateHarleyDialogue(state: GameState, playerChoice: string): Promise<string | null> {
   if (!openai) return null;
@@ -25,7 +25,7 @@ Be manic, darkly humorous, and unsettling. Use your thick Brooklyn accent occasi
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gemini-1.5-pro',
+      model: 'gpt-4o',
       messages: [{ role: 'system', content: prompt }],
       max_tokens: 50,
       temperature: 0.9,

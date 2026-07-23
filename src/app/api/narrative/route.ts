@@ -8,10 +8,7 @@ import { generateHarleyDialogue } from '@/lib/agents/harley'
 
 // We will skip OpenAI if there's no API key to allow testing the UI
 const apiKey = process.env.OPENAI_API_KEY
-const openai = apiKey ? new OpenAI({ 
-  apiKey,
-  baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/"
-}) : null
+const openai = apiKey ? new OpenAI({ apiKey }) : null
 
 function generateMockResponse(state: GameState, playerChoice: string) {
   let mockNarrative = ""
@@ -251,7 +248,7 @@ export async function POST(req: Request) {
     }
 
     const stream = await openai.chat.completions.create({
-      model: 'gemini-1.5-pro',
+      model: 'gpt-4o',
       stream: true,
       response_format: {
         type: "json_schema",
