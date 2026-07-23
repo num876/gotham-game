@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
-import OpenAI from 'openai'
+import { GoogleGenAI } from '@google/genai'
 
-const apiKey = process.env.OPENAI_API_KEY
-const openai = apiKey ? new OpenAI({ apiKey }) : null
+const apiKey = process.env.GEMINI_API_KEY
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null
 
 export async function POST(req: Request) {
   try {
@@ -12,24 +12,29 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing prompt or sessionId' }, { status: 400 })
     }
 
-    if (!openai) {
+    if (!ai) {
       // Offline fallback: Return a static placeholder or nothing
       return NextResponse.json({ url: null })
     }
 
     console.log(`Generating scene image for Turn ${turn}: "${prompt}"`)
 
-    const response = await openai.images.generate({
-      model: "dall-e-3",
+    const response = await ai.models.generateImages({
+      model: "imagen-3.0-generate-002",
       prompt: prompt,
-      n: 1,
-      size: "1024x1024"
+      config: {
+        numberOfImages: 1,
+        aspectRatio: "1:1",
+        outputMimeType: "image/jpeg"
+      }
     })
 
-    const url = response.data?.[0]?.url
-    if (!url) {
+    const base64 = response.generatedImages?.[0]?.image?.imageBytes
+    if (!base64) {
       throw new Error('No image generated')
     }
+
+    const url = `data:image/jpeg;base64,${base64}`
 
     return NextResponse.json({ url })
 

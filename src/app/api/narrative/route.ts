@@ -1,4 +1,5 @@
-import OpenAI from 'openai'
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { GoogleGenAI } from '@google/genai'
 import { buildSystemPrompt, buildUserMessage } from '@/lib/openai'
 import { GameState } from '@/types/game'
 import { NextResponse } from 'next/server'
@@ -6,9 +7,9 @@ import { addMemory, retrieveRelevantMemories } from '@/lib/vector-store'
 import { getCachedNarrative } from '@/lib/cache'
 import { generateHarleyDialogue } from '@/lib/agents/harley'
 
-// We will skip OpenAI if there's no API key to allow testing the UI
-const apiKey = process.env.OPENAI_API_KEY
-const openai = apiKey ? new OpenAI({ apiKey }) : null
+// We will skip Gemini if there's no API key to allow testing the UI
+const apiKey = process.env.GEMINI_API_KEY
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null
 
 function generateMockResponse(state: GameState, playerChoice: string) {
   let mockNarrative = ""
@@ -167,7 +168,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
-  if (!openai) {
+  if (!ai) {
     const mockResponse = generateMockResponse(state, playerChoice)
     return new Response(
       new ReadableStream({
@@ -247,316 +248,270 @@ export async function POST(req: Request) {
       })
     }
 
-    const stream = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      stream: true,
-      response_format: {
-        type: "json_schema",
-        json_schema: {
-          name: "narrative_response",
-          strict: true,
-          schema: {
-            type: "object",
-            properties: {
-              narrative: { type: "string" },
-              speakerLines: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    character: { type: "string" },
-                    line: { type: "string" },
-                    emotion: { type: ["string", "null"], description: "Optional emotion" }
-                  },
-                  required: ["character", "line", "emotion"],
-                  additionalProperties: false
-                }
-              },
-              newConsequence: {
-                type: ["object", "null"],
+    // Merge messages into the format Gemini expects for contents
+    let contentsText = finalSystemPrompt + `\n\nRespond with valid JSON following the narrative_response schema.\n\n`
+    
+    messageHistory.slice(-14).forEach((msg: any) => {
+      contentsText += `${msg.role.toUpperCase()}: ${msg.content}\n\n`
+    })
+    contentsText += `USER: ${buildUserMessage(sanitizedState, playerChoice)}`
+
+    const responseStream = await ai.models.generateContentStream({
+      model: 'gemini-2.5-pro',
+      contents: contentsText,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: "OBJECT" as any,
+          properties: {
+            narrative: { type: "STRING" as any },
+            speakerLines: {
+              type: "ARRAY" as any,
+              items: {
+                type: "OBJECT" as any,
                 properties: {
-                  id: { type: "string" },
-                  decisionMade: { type: "string" },
-                  impact: { type: "string" },
-                  status: { type: "string", enum: ["pending", "resolved", "haunting"] },
-                  turnMade: { type: "number" }
+                  character: { type: "STRING" as any },
+                  line: { type: "STRING" as any },
+                  emotion: { type: "STRING" as any, nullable: true, description: "Optional emotion" }
                 },
-                required: ["id", "decisionMade", "impact", "status", "turnMade"],
-                additionalProperties: false
-              },
-              caseUpdate: {
-                type: ["object", "null"],
-                properties: {
-                  suspectId: { type: "string" },
-                  newEvidence: { type: "string" },
-                  newSuspectNote: { type: "string" }
-                },
-                required: ["suspectId", "newEvidence", "newSuspectNote"],
-                additionalProperties: false
-              },
-              scannableEvidence: {
-                type: ["array", "null"],
-                items: {
-                  type: "object",
-                  properties: {
-                    id: { type: "string" },
-                    name: { type: "string" },
-                    description: { type: "string" }
-                  },
-                  required: ["id", "name", "description"],
-                  additionalProperties: false
-                }
-              },
-              statDeltas: {
-                type: "object",
-                properties: {
-                  harveyStability: { type: "number" },
-                  gordonRelationship: { type: "number" },
-                  selinaTrust: { type: "number" },
-                  gildaTrust: { type: "number" },
-                  cityHope: { type: "number" },
-                  brucePsycheCost: { type: "number" }
-                },
-                required: ["harveyStability", "gordonRelationship", "selinaTrust", "gildaTrust", "cityHope", "brucePsycheCost"],
-                additionalProperties: false
-              },
-              harveyArcUpdate: {
-                type: ["object", "null"],
-                properties: {
-                  newStage: { type: "string" },
-                  triggerEvent: { type: "string" }
-                },
-                required: ["newStage", "triggerEvent"],
-                additionalProperties: false
-              },
-              twoFacePhaseUpdate: {
-                type: ["object", "null"],
-                properties: { newPhase: { type: "number" } },
-                required: ["newPhase"],
-                additionalProperties: false
-              },
-              gildaArcPhaseUpdate: {
-                type: ["object", "null"],
-                properties: { newPhase: { type: "string", enum: ["unsuspecting", "suspicious", "discovery", "the-choice"] } },
-                required: ["newPhase"],
-                additionalProperties: false
-              },
-              gildaKnowsUpdate: {
-                type: ["object", "null"],
-                properties: { knows: { type: "boolean" } },
-                required: ["knows"],
-                additionalProperties: false
-              },
-              gamePhaseUpdate: {
-                type: ["object", "null"],
-                properties: { newPhase: { type: "string", enum: ["investigation", "escalation", "finale"] } },
-                required: ["newPhase"],
-                additionalProperties: false
-              },
-              harleyStatusUpdate: {
-                type: ["object", "null"],
-                properties: { newStatus: { type: "string" } },
-                required: ["newStatus"],
-                additionalProperties: false
-              },
-              harleyAlignmentUpdate: {
-                type: ["object", "null"],
-                properties: { alignment: { type: "string", enum: ["chaos-ally", "chaos-antagonist"] } },
-                required: ["alignment"],
-                additionalProperties: false
-              },
-              gordonArcUpdate: {
-                type: ["object", "null"],
-                properties: { newArc: { type: "string" } },
-                required: ["newArc"],
-                additionalProperties: false
-              },
-              falconeStatusUpdate: {
-                type: ["object", "null"],
-                properties: { newStatus: { type: "string" } },
-                required: ["newStatus"],
-                additionalProperties: false
-              },
-              falconePhaseUpdate: {
-                type: ["object", "null"],
-                properties: { newPhase: { type: "number" } },
-                required: ["newPhase"],
-                additionalProperties: false
-              },
-              falconeBranchUpdate: {
-                type: ["object", "null"],
-                properties: { newBranch: { type: "string", enum: ["docks", "money"] } },
-                required: ["newBranch"],
-                additionalProperties: false
-              },
-              falconeLedgerUpdate: {
-                type: ["object", "null"],
-                properties: { newStatus: { type: "string", enum: ["with-falcone", "with-catwoman", "with-player", "destroyed"] } },
-                required: ["newStatus"],
-                additionalProperties: false
-              },
-              falconeMoleFoundUpdate: {
-                type: ["object", "null"],
-                properties: { found: { type: "boolean" } },
-                required: ["found"],
-                additionalProperties: false
-              },
-              falconeMoleIdentityUpdate: {
-                type: ["object", "null"],
-                properties: { identity: { type: "string" } },
-                required: ["identity"],
-                additionalProperties: false
-              },
-              catwomanChoiceUpdate: {
-                type: ["object", "null"],
-                properties: { choice: { type: "string", enum: ["team-up", "rejected", "let-go"] } },
-                required: ["choice"],
-                additionalProperties: false
-              },
-              selinaAlignmentUpdate: {
-                type: ["object", "null"],
-                properties: { alignment: { type: "string", enum: ["ally", "neutral", "antagonist", "gone"] } },
-                required: ["alignment"],
-                additionalProperties: false
-              },
-              penguinStatusUpdate: {
-                type: ["object", "null"],
-                properties: { newStatus: { type: "string" } },
-                required: ["newStatus"],
-                additionalProperties: false
-              },
-              penguinArcPhaseUpdate: {
-                type: ["object", "null"],
-                properties: { newPhase: { type: "number" } },
-                required: ["newPhase"],
-                additionalProperties: false
-              },
-              gcpdMoleArcPhaseUpdate: {
-                type: ["object", "null"],
-                properties: { newPhase: { type: "number" } },
-                required: ["newPhase"],
-                additionalProperties: false
-              },
-              territoriesUpdate: {
-                type: ['object', 'null'],
-                properties: {
-                  territories: {
-                    type: "object",
-                    properties: {
-                      downtown: { type: "object", properties: { control: { type: "string" }, squadsAssigned: { type: "number" } }, required: ["control", "squadsAssigned"], additionalProperties: false },
-                      narrows: { type: "object", properties: { control: { type: "string" }, squadsAssigned: { type: "number" } }, required: ["control", "squadsAssigned"], additionalProperties: false },
-                      industrial: { type: "object", properties: { control: { type: "string" }, squadsAssigned: { type: "number" } }, required: ["control", "squadsAssigned"], additionalProperties: false },
-                      diamond: { type: "object", properties: { control: { type: "string" }, squadsAssigned: { type: "number" } }, required: ["control", "squadsAssigned"], additionalProperties: false },
-                      port: { type: "object", properties: { control: { type: "string" }, squadsAssigned: { type: "number" } }, required: ["control", "squadsAssigned"], additionalProperties: false }
-                    },
-                    required: ["downtown", "narrows", "industrial", "diamond", "port"],
-                    additionalProperties: false
-                  },
-                  gcpdSquadsAvailable: { type: "number" }
-                },
-                required: ["territories", "gcpdSquadsAvailable"],
-                additionalProperties: false
-              },
-              episodeUpdate: { type: ['object', 'null'], properties: { episode: { type: 'string' } }, required: ['episode'], additionalProperties: false },
-              scene45AppealFlagUpdate: { type: ['object', 'null'], properties: { flag: { type: 'boolean' } }, required: ['flag'], additionalProperties: false },
-              outcomeUpdate: { type: ['object', 'null'], properties: { outcome: { type: 'string' } }, required: ['outcome'], additionalProperties: false },
-              alfredStatusUpdate: { type: ['object', 'null'], properties: { status: { type: 'string' } }, required: ['status'], additionalProperties: false },
-              jokerInfectionSpreadUpdate: { type: ['object', 'null'], properties: { spread: { type: 'integer' } }, required: ['spread'], additionalProperties: false },
-              harleyChaosBondUpdate: { type: ['object', 'null'], properties: { bond: { type: 'integer' } }, required: ['bond'], additionalProperties: false },
-              chapterUpdate: { type: ['object', 'null'], properties: { chapter: { type: 'integer' } }, required: ['chapter'], additionalProperties: false },
-              gothamChaosUpdate: { type: ['object', 'null'], properties: { chaos: { type: 'integer' } }, required: ['chaos'], additionalProperties: false },
-              jokerPhaseUpdate: { type: ['object', 'null'], properties: { phase: { type: 'integer' } }, required: ['phase'], additionalProperties: false },
-              robinTrustUpdate: { type: ['object', 'null'], properties: { trust: { type: 'integer' } }, required: ['trust'], additionalProperties: false },
-              robinPhaseUpdate: { type: ['object', 'null'], properties: { phase: { type: 'integer' } }, required: ['phase'], additionalProperties: false },
-              gordonJokerPhaseUpdate: { type: ['object', 'null'], properties: { phase: { type: 'integer' } }, required: ['phase'], additionalProperties: false },
-              gildaJokerPhaseUpdate: { type: ['object', 'null'], properties: { phase: { type: 'integer' } }, required: ['phase'], additionalProperties: false },
-              hallucinationPhaseUpdate: { type: ['object', 'null'], properties: { phase: { type: 'integer' } }, required: ['phase'], additionalProperties: false },
-              identitySwitchAvailable: { type: 'boolean' },
-              choices: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    id: { type: "string" },
-                    label: { type: "string" },
-                    identity: { type: "string", enum: ["bruce", "batman"] },
-                    risk: { type: "string" },
-                    consequence: { type: "string" },
-                    hint: { type: ["string", "null"] }
-                  },
-                  required: ["id", "label", "identity", "risk", "consequence", "hint"],
-                  additionalProperties: false
-                }
-              },
-              sceneTitle: { type: "string" },
-              visualEffect: { type: ["string", "null"] },
-              sceneImagePrompt: { type: ["string", "null"] },
-              ambientAudioPrompt: { type: ["string", "null"] }
+                required: ["character", "line"]
+              }
             },
-            required: [
-              "narrative",
-              "speakerLines",
-              "statDeltas",
-              "identitySwitchAvailable",
-              "choices",
-              "sceneTitle",
-              "newConsequence",
-              "caseUpdate",
-              "harveyArcUpdate",
-              "twoFacePhaseUpdate",
-              "gildaArcPhaseUpdate",
-              "gildaKnowsUpdate",
-              "gamePhaseUpdate",
-              "harleyStatusUpdate",
-              "harleyAlignmentUpdate",
-              "gordonArcUpdate",
-              "falconeStatusUpdate",
-              "falconePhaseUpdate",
-              "falconeBranchUpdate",
-              "falconeLedgerUpdate",
-              "falconeMoleFoundUpdate",
-              "falconeMoleIdentityUpdate",
-              "catwomanChoiceUpdate",
-              "selinaAlignmentUpdate",
-              "penguinStatusUpdate",
-              "penguinArcPhaseUpdate",
-              "gcpdMoleArcPhaseUpdate",
-              "territoriesUpdate",
-              "episodeUpdate",
-              "scene45AppealFlagUpdate",
-              "outcomeUpdate",
-              "alfredStatusUpdate",
-              "jokerInfectionSpreadUpdate",
-              "harleyChaosBondUpdate",
-              "chapterUpdate",
-              "gothamChaosUpdate",
-              "jokerPhaseUpdate",
-              "robinTrustUpdate",
-              "robinPhaseUpdate",
-              "gordonJokerPhaseUpdate",
-              "gildaJokerPhaseUpdate",
-              "hallucinationPhaseUpdate",
-              "visualEffect",
-              "sceneImagePrompt",
-              "ambientAudioPrompt"
-            ],
-            additionalProperties: false
-          }
+            newConsequence: {
+              type: "OBJECT" as any,
+              nullable: true,
+              properties: {
+                id: { type: "STRING" as any },
+                decisionMade: { type: "STRING" as any },
+                impact: { type: "STRING" as any },
+                status: { type: "STRING" as any, enum: ["pending", "resolved", "haunting"] },
+                turnMade: { type: "NUMBER" as any }
+              },
+              required: ["id", "decisionMade", "impact", "status", "turnMade"]
+            },
+            caseUpdate: {
+              type: "OBJECT" as any,
+              nullable: true,
+              properties: {
+                suspectId: { type: "STRING" as any },
+                newEvidence: { type: "STRING" as any },
+                newSuspectNote: { type: "STRING" as any }
+              },
+              required: ["suspectId", "newEvidence", "newSuspectNote"]
+            },
+            scannableEvidence: {
+              type: "ARRAY" as any,
+              nullable: true,
+              items: {
+                type: "OBJECT" as any,
+                properties: {
+                  id: { type: "STRING" as any },
+                  name: { type: "STRING" as any },
+                  description: { type: "STRING" as any }
+                },
+                required: ["id", "name", "description"]
+              }
+            },
+            statDeltas: {
+              type: "OBJECT" as any,
+              properties: {
+                harveyStability: { type: "NUMBER" as any },
+                gordonRelationship: { type: "NUMBER" as any },
+                selinaTrust: { type: "NUMBER" as any },
+                gildaTrust: { type: "NUMBER" as any },
+                cityHope: { type: "NUMBER" as any },
+                brucePsycheCost: { type: "NUMBER" as any }
+              },
+              required: ["harveyStability", "gordonRelationship", "selinaTrust", "gildaTrust", "cityHope", "brucePsycheCost"]
+            },
+            harveyArcUpdate: {
+              type: "OBJECT" as any,
+              nullable: true,
+              properties: {
+                newStage: { type: "STRING" as any },
+                triggerEvent: { type: "STRING" as any }
+              },
+              required: ["newStage", "triggerEvent"]
+            },
+            twoFacePhaseUpdate: {
+              type: "OBJECT" as any,
+              nullable: true,
+              properties: { newPhase: { type: "NUMBER" as any } },
+              required: ["newPhase"]
+            },
+            gildaArcPhaseUpdate: {
+              type: "OBJECT" as any,
+              nullable: true,
+              properties: { newPhase: { type: "STRING" as any, enum: ["unsuspecting", "suspicious", "discovery", "the-choice"] } },
+              required: ["newPhase"]
+            },
+            gildaKnowsUpdate: {
+              type: "OBJECT" as any,
+              nullable: true,
+              properties: { knows: { type: "BOOLEAN" as any } },
+              required: ["knows"]
+            },
+            gamePhaseUpdate: {
+              type: "OBJECT" as any,
+              nullable: true,
+              properties: { newPhase: { type: "STRING" as any, enum: ["investigation", "escalation", "finale"] } },
+              required: ["newPhase"]
+            },
+            harleyStatusUpdate: {
+              type: "OBJECT" as any,
+              nullable: true,
+              properties: { newStatus: { type: "STRING" as any } },
+              required: ["newStatus"]
+            },
+            harleyAlignmentUpdate: {
+              type: "OBJECT" as any,
+              nullable: true,
+              properties: { alignment: { type: "STRING" as any, enum: ["chaos-ally", "chaos-antagonist"] } },
+              required: ["alignment"]
+            },
+            gordonArcUpdate: {
+              type: "OBJECT" as any,
+              nullable: true,
+              properties: { newArc: { type: "STRING" as any } },
+              required: ["newArc"]
+            },
+            falconeStatusUpdate: {
+              type: "OBJECT" as any,
+              nullable: true,
+              properties: { newStatus: { type: "STRING" as any } },
+              required: ["newStatus"]
+            },
+            falconePhaseUpdate: {
+              type: "OBJECT" as any,
+              nullable: true,
+              properties: { newPhase: { type: "NUMBER" as any } },
+              required: ["newPhase"]
+            },
+            falconeBranchUpdate: {
+              type: "OBJECT" as any,
+              nullable: true,
+              properties: { newBranch: { type: "STRING" as any, enum: ["docks", "money"] } },
+              required: ["newBranch"]
+            },
+            falconeLedgerUpdate: {
+              type: "OBJECT" as any,
+              nullable: true,
+              properties: { newStatus: { type: "STRING" as any, enum: ["with-falcone", "with-catwoman", "with-player", "destroyed"] } },
+              required: ["newStatus"]
+            },
+            falconeMoleFoundUpdate: {
+              type: "OBJECT" as any,
+              nullable: true,
+              properties: { found: { type: "BOOLEAN" as any } },
+              required: ["found"]
+            },
+            falconeMoleIdentityUpdate: {
+              type: "OBJECT" as any,
+              nullable: true,
+              properties: { identity: { type: "STRING" as any } },
+              required: ["identity"]
+            },
+            catwomanChoiceUpdate: {
+              type: "OBJECT" as any,
+              nullable: true,
+              properties: { choice: { type: "STRING" as any, enum: ["team-up", "rejected", "let-go"] } },
+              required: ["choice"]
+            },
+            selinaAlignmentUpdate: {
+              type: "OBJECT" as any,
+              nullable: true,
+              properties: { alignment: { type: "STRING" as any, enum: ["ally", "neutral", "antagonist", "gone"] } },
+              required: ["alignment"]
+            },
+            penguinStatusUpdate: {
+              type: "OBJECT" as any,
+              nullable: true,
+              properties: { newStatus: { type: "STRING" as any } },
+              required: ["newStatus"]
+            },
+            penguinArcPhaseUpdate: {
+              type: "OBJECT" as any,
+              nullable: true,
+              properties: { newPhase: { type: "NUMBER" as any } },
+              required: ["newPhase"]
+            },
+            gcpdMoleArcPhaseUpdate: {
+              type: "OBJECT" as any,
+              nullable: true,
+              properties: { newPhase: { type: "NUMBER" as any } },
+              required: ["newPhase"]
+            },
+            territoriesUpdate: {
+              type: "OBJECT" as any,
+              nullable: true,
+              properties: {
+                territories: {
+                  type: "OBJECT" as any,
+                  properties: {
+                    downtown: { type: "OBJECT" as any, properties: { control: { type: "STRING" as any }, squadsAssigned: { type: "NUMBER" as any } }, required: ["control", "squadsAssigned"] },
+                    narrows: { type: "OBJECT" as any, properties: { control: { type: "STRING" as any }, squadsAssigned: { type: "NUMBER" as any } }, required: ["control", "squadsAssigned"] },
+                    industrial: { type: "OBJECT" as any, properties: { control: { type: "STRING" as any }, squadsAssigned: { type: "NUMBER" as any } }, required: ["control", "squadsAssigned"] },
+                    diamond: { type: "OBJECT" as any, properties: { control: { type: "STRING" as any }, squadsAssigned: { type: "NUMBER" as any } }, required: ["control", "squadsAssigned"] },
+                    port: { type: "OBJECT" as any, properties: { control: { type: "STRING" as any }, squadsAssigned: { type: "NUMBER" as any } }, required: ["control", "squadsAssigned"] }
+                  },
+                  required: ["downtown", "narrows", "industrial", "diamond", "port"]
+                },
+                gcpdSquadsAvailable: { type: "NUMBER" as any }
+              },
+              required: ["territories", "gcpdSquadsAvailable"]
+            },
+            episodeUpdate: { type: "OBJECT" as any, nullable: true, properties: { episode: { type: "STRING" as any } }, required: ['episode'] },
+            scene45AppealFlagUpdate: { type: "OBJECT" as any, nullable: true, properties: { flag: { type: "BOOLEAN" as any } }, required: ['flag'] },
+            outcomeUpdate: { type: "OBJECT" as any, nullable: true, properties: { outcome: { type: "STRING" as any } }, required: ['outcome'] },
+            alfredStatusUpdate: { type: "OBJECT" as any, nullable: true, properties: { status: { type: "STRING" as any } }, required: ['status'] },
+            jokerInfectionSpreadUpdate: { type: "OBJECT" as any, nullable: true, properties: { spread: { type: "NUMBER" as any } }, required: ['spread'] },
+            harleyChaosBondUpdate: { type: "OBJECT" as any, nullable: true, properties: { bond: { type: "NUMBER" as any } }, required: ['bond'] },
+            chapterUpdate: { type: "OBJECT" as any, nullable: true, properties: { chapter: { type: "NUMBER" as any } }, required: ['chapter'] },
+            gothamChaosUpdate: { type: "OBJECT" as any, nullable: true, properties: { chaos: { type: "NUMBER" as any } }, required: ['chaos'] },
+            jokerPhaseUpdate: { type: "OBJECT" as any, nullable: true, properties: { phase: { type: "NUMBER" as any } }, required: ['phase'] },
+            robinTrustUpdate: { type: "OBJECT" as any, nullable: true, properties: { trust: { type: "NUMBER" as any } }, required: ['trust'] },
+            robinPhaseUpdate: { type: "OBJECT" as any, nullable: true, properties: { phase: { type: "NUMBER" as any } }, required: ['phase'] },
+            gordonJokerPhaseUpdate: { type: "OBJECT" as any, nullable: true, properties: { phase: { type: "NUMBER" as any } }, required: ['phase'] },
+            gildaJokerPhaseUpdate: { type: "OBJECT" as any, nullable: true, properties: { phase: { type: "NUMBER" as any } }, required: ['phase'] },
+            hallucinationPhaseUpdate: { type: "OBJECT" as any, nullable: true, properties: { phase: { type: "NUMBER" as any } }, required: ['phase'] },
+            identitySwitchAvailable: { type: "BOOLEAN" as any },
+            choices: {
+              type: "ARRAY" as any,
+              items: {
+                type: "OBJECT" as any,
+                properties: {
+                  id: { type: "STRING" as any },
+                  label: { type: "STRING" as any },
+                  identity: { type: "STRING" as any, enum: ["bruce", "batman"] },
+                  risk: { type: "STRING" as any },
+                  consequence: { type: "STRING" as any },
+                  hint: { type: "STRING" as any, nullable: true }
+                },
+                required: ["id", "label", "identity", "risk", "consequence"]
+              }
+            },
+            sceneTitle: { type: "STRING" as any },
+            visualEffect: { type: "STRING" as any, nullable: true },
+            sceneImagePrompt: { type: "STRING" as any, nullable: true },
+            ambientAudioPrompt: { type: "STRING" as any, nullable: true }
+          },
+          required: [
+            "narrative",
+            "speakerLines",
+            "statDeltas",
+            "identitySwitchAvailable",
+            "choices",
+            "sceneTitle"
+          ]
         }
-      },
-      messages: [
-        { role: 'system', content: finalSystemPrompt },
-        ...messageHistory.slice(-14),
-        { role: 'user', content: buildUserMessage(sanitizedState, playerChoice) }
-      ],
-      max_tokens: 4000
+      }
     })
 
     return new Response(
       new ReadableStream({
         async start(controller) {
-          for await (const chunk of stream) {
-            const text = chunk.choices[0]?.delta?.content
+          for await (const chunk of responseStream) {
+            const text = chunk.text
             if (text) controller.enqueue(new TextEncoder().encode(text))
           }
           controller.close()

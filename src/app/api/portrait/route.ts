@@ -1,17 +1,15 @@
 import { NextResponse } from 'next/server'
-import OpenAI from 'openai'
+import { GoogleGenAI } from '@google/genai'
 import fs from 'fs/promises'
 import path from 'path'
 
-const openai = process.env.OPENAI_API_KEY ? new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY,
-  baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/"
-}) : null
+const apiKey = process.env.GEMINI_API_KEY
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null
 
 export async function POST(req: Request) {
   try {
-    if (!openai) {
-      return NextResponse.json({ error: 'OpenAI API key missing' }, { status: 503 })
+    if (!ai) {
+      return NextResponse.json({ error: 'Gemini API key missing' }, { status: 503 })
     }
 
     const { characterId, characterName } = await req.json()
@@ -33,20 +31,20 @@ export async function POST(req: Request) {
 
     const prompt = `A dark, cinematic noir style digital painting of ${characterName} from Batman. The lighting is dramatic, heavily shadowed, rim-lit. High contrast, gritty, telltale games aesthetic mixed with modern digital art. Portrait shot, looking directly at the camera.`
 
-    const response = await openai.images.generate({
-      model: "dall-e-3",
+    const response = await ai.models.generateImages({
+      model: "imagen-3.0-generate-002",
       prompt,
-      n: 1,
-      size: "1024x1024",
+      config: {
+        numberOfImages: 1,
+        aspectRatio: "1:1",
+        outputMimeType: "image/png"
+      }
     })
 
-    const imageUrl = response?.data?.[0]?.url
-    if (!imageUrl) throw new Error('No image URL returned from OpenAI')
+    const base64 = response.generatedImages?.[0]?.image?.imageBytes
+    if (!base64) throw new Error('No image base64 returned from Gemini Imagen')
 
-    // Download the image
-    const imageResponse = await fetch(imageUrl)
-    const arrayBuffer = await imageResponse.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
+    const buffer = Buffer.from(base64, 'base64')
 
     // Save to public directory
     await fs.writeFile(imagePath, buffer)

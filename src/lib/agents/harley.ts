@@ -1,11 +1,11 @@
-import OpenAI from 'openai'
+import { GoogleGenAI } from '@google/genai'
 import { GameState } from '@/types/game'
 
-const apiKey = process.env.OPENAI_API_KEY
-const openai = apiKey ? new OpenAI({ apiKey }) : null
+const apiKey = process.env.GEMINI_API_KEY
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null
 
 export async function generateHarleyDialogue(state: GameState, playerChoice: string): Promise<string | null> {
-  if (!openai) return null;
+  if (!ai) return null;
   
   // Harley only matters significantly in episodes > 5 or if harleyChaosBond > 20
   if (state.episode !== 'ep6-sable-point' && state.episode !== 'ep7-what-the-water-remembers' && state.episode !== 'ep8-the-thing-in-the-walls' && state.episode !== 'ep9-sable-point-burns' && (state.harleyChaosBond || 0) < 20) {
@@ -24,14 +24,16 @@ Be manic, darkly humorous, and unsettling. Use your thick Brooklyn accent occasi
 `;
 
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [{ role: 'system', content: prompt }],
-      max_tokens: 50,
-      temperature: 0.9,
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        maxOutputTokens: 50,
+        temperature: 0.9,
+      }
     });
     
-    return response.choices[0]?.message?.content?.trim() || null;
+    return response.text?.trim() || null;
   } catch (e) {
     console.error('Failed to generate Harley dialogue:', e);
     return null;

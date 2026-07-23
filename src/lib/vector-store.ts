@@ -1,9 +1,9 @@
 import fs from 'fs'
 import path from 'path'
-import OpenAI from 'openai'
+import { GoogleGenAI } from '@google/genai'
 
-const apiKey = process.env.OPENAI_API_KEY
-const openai = apiKey ? new OpenAI({ apiKey }) : null
+const apiKey = process.env.GEMINI_API_KEY
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null
 
 const STORE_PATH = path.join(process.cwd(), '.gotham-vector-store.json')
 
@@ -51,15 +51,16 @@ function saveStore(store: Memory[]) {
 }
 
 export async function addMemory(sessionId: string, text: string) {
-  if (!openai) return
+  if (!ai) return
   
   try {
-    const response = await openai.embeddings.create({
-      model: 'text-embedding-3-small',
-      input: text,
+    const response = await ai.models.embedContent({
+      model: 'text-embedding-004',
+      contents: text,
     })
     
-    const embedding = response.data[0].embedding
+    const embedding = response.embeddings?.[0]?.values
+    if (!embedding) throw new Error('No embedding returned')
     const memory: Memory = {
       id: Math.random().toString(36).substring(7),
       sessionId,
@@ -78,17 +79,18 @@ export async function addMemory(sessionId: string, text: string) {
 }
 
 export async function retrieveRelevantMemories(sessionId: string, query: string, topK: number = 3): Promise<string[]> {
-  if (!openai) return []
+  if (!ai) return []
   
   try {
     const store = loadStore().filter(m => m.sessionId === sessionId)
     if (store.length === 0) return []
     
-    const response = await openai.embeddings.create({
-      model: 'text-embedding-3-small',
-      input: query,
+    const response = await ai.models.embedContent({
+      model: 'text-embedding-004',
+      contents: query,
     })
-    const queryEmbedding = response.data[0].embedding
+    const queryEmbedding = response.embeddings?.[0]?.values
+    if (!queryEmbedding) throw new Error('No embedding returned')
     
     const scoredMemories = store.map(memory => ({
       ...memory,

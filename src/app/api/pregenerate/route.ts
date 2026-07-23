@@ -1,17 +1,18 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from 'next/server'
 import { GameState } from '@/types/game'
 import { setCachedNarrative } from '@/lib/cache'
-import OpenAI from 'openai'
+import { GoogleGenAI } from '@google/genai'
 import { buildSystemPrompt, buildUserMessage } from '@/lib/openai'
 import { retrieveRelevantMemories } from '@/lib/vector-store'
 import { generateHarleyDialogue } from '@/lib/agents/harley'
 
-const apiKey = process.env.OPENAI_API_KEY
-const openai = apiKey ? new OpenAI({ apiKey }) : null
+const apiKey = process.env.GEMINI_API_KEY
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null
 
 export async function POST(req: Request) {
-  if (!openai) {
-    return NextResponse.json({ success: false, reason: 'No OpenAI API key' })
+  if (!ai) {
+    return NextResponse.json({ success: false, reason: 'No Gemini API key' })
   }
 
   try {
@@ -19,7 +20,7 @@ export async function POST(req: Request) {
     const sanitizedState = JSON.parse(JSON.stringify(state)) as GameState
 
     // We do not wait for this to finish before returning success to the client.
-    // Background generation for all 3 choices.
+    // Background generation for all choices.
     choices.forEach(async (choice: { id: string, label: string, identity: string }) => {
       try {
         let finalSystemPrompt = buildSystemPrompt(sanitizedState)
@@ -38,18 +39,24 @@ export async function POST(req: Request) {
            finalSystemPrompt += `\n\nCRITICAL MULTI-AGENT INJECTION:\nHarley Quinn is present in this scene. Her dedicated agent has generated her dialogue response to the player's choice. You MUST include this exact line of dialogue in your 'speakerLines' output for her: "${harleyLine}"\nEnsure your generated narrative contextualizes her saying this.`
         }
 
-        const response = await openai.chat.completions.create({
-          model: 'gpt-4o',
-          response_format: { type: "json_object" }, // we use json_object for pregen as json_schema is huge to duplicate here, but we can trust the LLM mostly
-          messages: [
-            { role: 'system', content: finalSystemPrompt + `\n\nRespond with valid JSON following the narrative_response schema.` },
-            ...messageHistory.slice(-14),
-            { role: 'user', content: buildUserMessage(sanitizedState, choice.label) }
-          ],
-          max_tokens: 4000
+        // Merge messages into the format Gemini expects for contents
+        let contentsText = finalSystemPrompt + `\n\nRespond with valid JSON following the narrative_response schema.\n\n`
+        
+        messageHistory.slice(-14).forEach((msg: any) => {
+          contentsText += `${msg.role.toUpperCase()}: ${msg.content}\n\n`
+        })
+        contentsText += `USER: ${buildUserMessage(sanitizedState, choice.label)}`
+
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: contentsText,
+          config: {
+            responseMimeType: 'application/json',
+            maxOutputTokens: 4000
+          }
         });
 
-        const content = response.choices[0]?.message?.content;
+        const content = response.text;
         if (content) {
           const parsed = JSON.parse(content);
           setCachedNarrative(state.sessionId, choice.id, parsed);
