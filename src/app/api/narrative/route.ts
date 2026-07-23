@@ -257,7 +257,7 @@ export async function POST(req: Request) {
     contentsText += `USER: ${buildUserMessage(sanitizedState, playerChoice || "Begin game.")}`
 
     const responseStream = await ai.models.generateContentStream({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-1.5-flash',
       contents: contentsText,
       config: {
         responseMimeType: 'application/json',
