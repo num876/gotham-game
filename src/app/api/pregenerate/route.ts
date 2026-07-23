@@ -40,9 +40,9 @@ export async function POST(req: Request) {
         }
 
         // Merge messages into the format Gemini expects for contents
-        let contentsText = finalSystemPrompt + `\n\nRespond with valid JSON following the narrative_response schema.\n\n`
+        let contentsText = finalSystemPrompt + `\n\nRespond with valid JSON following the narrative_response schema.\n\n`;
         
-        messageHistory.slice(-14).forEach((msg: any) => {
+        (messageHistory || []).slice(-14).forEach((msg: any) => {
           contentsText += `${msg.role.toUpperCase()}: ${msg.content}\n\n`
         })
         contentsText += `USER: ${buildUserMessage(sanitizedState, choice.label)}`

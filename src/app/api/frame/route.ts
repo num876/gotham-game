@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server'
-import { GoogleGenAI } from '@google/genai'
+import OpenAI from 'openai'
 
-const apiKey = process.env.GEMINI_API_KEY
-const ai = apiKey ? new GoogleGenAI({ apiKey }) : null
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null
 
 export async function POST(req: Request) {
   try {
@@ -12,30 +11,25 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing parameters' }, { status: 400 })
     }
 
-    if (!ai) {
-      return NextResponse.json({ error: 'Gemini API key not configured' }, { status: 503 })
+    if (!openai) {
+      return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 503 })
     }
 
     const artStyle = "A highly realistic, cinematic visual photograph of the scene. Dark, gritty, and atmospheric. Masterful cinematography, dramatic lighting, moody shadows. Shot on 35mm film, photorealistic. CRITICAL: DO NOT include any text, words, borders, panels, or storyboard elements. This must be a single immersive photograph."
     const fullPrompt = `${artStyle} Environment: "${sceneTitle}". Description: ${narrative.substring(0, 300)}`
 
-    const response = await ai.models.generateImages({
-      model: "imagen-3.0-generate-002",
+    const response = await openai.images.generate({
+      model: "dall-e-3",
       prompt: fullPrompt.substring(0, 1000), 
-      config: {
-        numberOfImages: 1,
-        aspectRatio: "1:1",
-        outputMimeType: "image/jpeg"
-      }
+      n: 1,
+      size: "1024x1024",
     })
 
-    const base64 = response.generatedImages?.[0]?.image?.imageBytes
+    const url = response.data?.[0]?.url
     
-    if (!base64) {
-      throw new Error('No image data returned from Gemini Imagen')
+    if (!url) {
+      throw new Error('No image data returned from OpenAI')
     }
-
-    const url = `data:image/jpeg;base64,${base64}`
 
     return NextResponse.json({ url })
   } catch (error: unknown) {
